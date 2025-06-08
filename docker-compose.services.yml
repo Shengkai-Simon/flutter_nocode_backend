@@ -1,0 +1,91 @@
+version: '3.9'
+
+services:
+  config-service:
+    build:
+      context: .
+      dockerfile: microservices/config-service/Dockerfile
+    container_name: config-service
+    ports:
+      - "8888:8888"
+    environment:
+      SERVER_PORT: 8888
+      APP_NAME: config-service
+      SPRING_PROFILES_ACTIVE: native
+    volumes:
+      - ./config-repo:/config-repo
+    networks:
+      - backend
+
+  discovery-service:
+    build: ./microservices/discovery-service
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    environment:
+      SERVER_PORT: 8761
+      APP_NAME: discovery-service
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      EUREKA_URL: ${EUREKA_URL}
+      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI}
+    depends_on:
+      - config-service
+    networks:
+      - backend
+
+  api-gateway:
+    build: ./microservices/api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      APP_NAME: api-gateway
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      EUREKA_URL: ${EUREKA_URL}
+      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI}
+    depends_on:
+      - config-service
+      - discovery-service
+    networks:
+      - backend
+
+  auth-service:
+    build: ./microservices/auth-service
+    container_name: auth-service
+    ports:
+      - "9000:9000"
+    environment:
+      SERVER_PORT: 9000
+      APP_NAME: auth-service
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      EUREKA_URL: ${EUREKA_URL}
+      JWT_ISSUER_URI: ${JWT_ISSUER_URI}
+      POSTGRE_SQL: ${POSTGRE_SQL}
+    depends_on:
+      - config-service
+      - discovery-service
+    networks:
+      - backend
+
+  user-service:
+    build: ./microservices/user-service
+    container_name: user-service
+    ports:
+      - "9100:9100"
+    environment:
+      SERVER_PORT: 9100
+      APP_NAME: user-service
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      EUREKA_URL: ${EUREKA_URL}
+      JWT_ISSUER_URI: ${JWT_ISSUER_URI}
+      POSTGRE_SQL: ${POSTGRE_SQL}
+    depends_on:
+      - config-service
+      - discovery-service
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
