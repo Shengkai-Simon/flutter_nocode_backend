@@ -1,6 +1,64 @@
 spring:
   application:
-    name: ${APP_NAME:api-gateway}
+    name: ${APP_NAME:api-gateway} # Name from existing config
+
+  # Attempt to override discovery locator from config server and define routes locally
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false # Disable automatic routes based on service ID for security.
+      routes:
+        # === Auth Service Routes ===
+        - id: auth-service-register
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/register
+          filters:
+            - RewritePath=/api/v1/auth/register, /auth/register
+
+        - id: auth-service-verify-email
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/verify-email
+          filters:
+            - RewritePath=/api/v1/auth/verify-email, /auth/verify-email
+
+        - id: auth-service-oauth2-endpoints
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/oauth2/**
+          filters:
+            - RewritePath=/api/v1/oauth2/(?<segment>.*), /oauth2/$\{segment}
+
+        - id: auth-service-oauth2-login-callbacks
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/login/oauth2/code/**
+          filters:
+            - RewritePath=/api/v1/login/oauth2/code/(?<segment>.*), /login/oauth2/code/$\{segment}
+
+        - id: auth-service-login-page
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/login
+          filters:
+            - RewritePath=/api/v1/login, /login
+
+        # === User Service Routes ===
+        # NO PUBLIC ROUTES for user-service are defined here.
+        # By disabling discovery.locator.enabled=false and not defining routes,
+        # internal user-service endpoints are not exposed via the gateway.
 
   config:
-    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888} # Keep existing config import
+
+# Eureka client configuration (essential for lb:// to work)
+# Adding this here as it's fundamental for gateway operation with service discovery.
+# It might also be provided by the config server; if so, this local definition would override or merge.
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true

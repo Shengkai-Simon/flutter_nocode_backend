@@ -4,3 +4,11 @@ spring:
 
   config:
     import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+
+# Placeholder for client secrets - ideally loaded from config-repo or environment variables in prod
+app:
+  clients:
+    frontend-app:
+      secret: "local-dev-frontend-secret" # Replace in config-repo/auth-service.yml or via env var
+    service-client:
+      secret: "local-dev-service-secret"   # Replace in config-repo/auth-service.yml or via env var
