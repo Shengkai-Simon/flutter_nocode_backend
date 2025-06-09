@@ -86,6 +86,25 @@ services:
     networks:
       - backend
 
+  notification-service:
+    build: ./microservices/notification-service
+    container_name: notification-service
+    ports:
+      - "9400:9400"
+    environment:
+      SERVER_PORT: 9400
+      APP_NAME: notification-service
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      EUREKA_URL: ${EUREKA_URL}
+      JWT_ISSUER_URI: ${JWT_ISSUER_URI}
+      POSTGRE_SQL: ${POSTGRE_SQL}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+    depends_on:
+      - config-service
+      - discovery-service
+    networks:
+      - backend
+
 networks:
   backend:
     driver: bridge
