@@ -1,0 +1,24 @@
+server:
+  port: ${SERVER_PORT:9400}
+
+spring:
+  application:
+    name: ${APP_NAME:notification-service}
+
+  datasource:
+    url: ${POSTGRE_SQL:jdbc:postgresql://localhost:5432}/notificationdb
+    username: user
+    password: pass
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: user
+    password: pass
+
+  # Mail (such as SMTP)
+#  mail:
+#    host: smtp.example.com
+#    port: 587
+#    username: your-smtp-user
+#    password: your-smtp-pass
