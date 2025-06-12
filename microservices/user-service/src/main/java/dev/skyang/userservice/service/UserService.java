@@ -63,35 +63,50 @@ public class UserService {
      */
     @Transactional
     public void register(RegistrationRequest request) {
-        Role defaultRole = roleRepository.findByName(RoleConstants.ROLE_USER)
-                .orElseThrow(() -> new RuntimeException("Error: Default role ROLE_USER not found."));
+        Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
 
-        // Use orElseGet to handle new users and users that already exist but aren't activated
-        User user = userRepository.findByEmail(request.getEmail()).orElseGet(() -> {
+        if (existingUserOpt.isPresent()) {
+            // --- Path A: Handle users that already exist but are not activated ---
+            User existingUser = existingUserOpt.get();
+            log.info("Updating existing unverified user: {}", request.getEmail());
+
+            if (existingUser.getStatus() == UserStatus.ACTIVE) {
+                throw new IllegalStateException("User with email " + request.getEmail() + " already exists and is active.");
+            }
+
+            // Make sure that existing users also have roles
+            if (existingUser.getRoles().isEmpty()) {
+                Role defaultRole = roleRepository.findByName(RoleConstants.ROLE_USER)
+                        .orElseThrow(() -> new RuntimeException("Error: Default role ROLE_USER not found."));
+                existingUser.getRoles().add(defaultRole);
+            }
+
+            // Update your password and save it. Because existingUser is persistent, a one-time save is sufficient.
+            existingUser.setPassword(passwordEncoder.encode(request.getPassword()));
+            userRepository.save(existingUser);
+
+            // Send a verification code
+            sendVerificationCode(existingUser.getEmail());
+
+        } else {
+            // --- Path B: Dealing with brand new users, you must use the "two-step save method"---
             log.info("Creating a new user account for: {}", request.getEmail());
+
+            // 1. Create and save a User object without a role so that it is a JPA-managed entity.
             User newUser = new User();
             newUser.setEmail(request.getEmail());
+            newUser.setPassword(passwordEncoder.encode(request.getPassword()));
             newUser.setStatus(UserStatus.AWAITING_VERIFICATION);
-            return newUser;
-        });
+            User savedUser = userRepository.save(newUser);
 
-        // --- Make sure that both new and experienced users are checked and assigned roles ---
-        if (user.getRoles().isEmpty()) {
-            log.info("Assigning default ROLE_USER to user: {}", request.getEmail());
-            user.setRoles(Set.of(defaultRole));
+            // 2. This 'savedUser' object is managed, and we can safely add roles to it.
+            Role defaultRole = roleRepository.findByName(RoleConstants.ROLE_USER)
+                    .orElseThrow(() -> new RuntimeException("Error: Default role ROLE_USER not found."));
+            savedUser.getRoles().add(defaultRole);
+
+            // 3. Send a verification code. The transaction is committed at the end of the method and the new role relationship is automatically written to the database.
+            sendVerificationCode(savedUser.getEmail());
         }
-
-        // Check account status to prevent activated users from being overwritten
-        if (user.getStatus() == UserStatus.ACTIVE) {
-            throw new IllegalStateException("User with email " + request.getEmail() + " already exists and is active.");
-        }
-
-        // Update passwords and save all changes (including new role relationships)
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        userRepository.save(user);
-
-        // Send a verification code
-        sendVerificationCode(user.getEmail());
     }
 
     /**
