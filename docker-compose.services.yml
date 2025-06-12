@@ -27,7 +27,6 @@ services:
       APP_NAME: discovery-service
       CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
       EUREKA_URL: ${EUREKA_URL}
-      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI}
     depends_on:
       - config-service
     networks:
@@ -43,7 +42,7 @@ services:
       APP_NAME: api-gateway
       CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
       EUREKA_URL: ${EUREKA_URL}
-      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI}
+      JWT_ISSUER_URI: ${JWT_ISSUER_URI}
     depends_on:
       - config-service
       - discovery-service
@@ -80,6 +79,8 @@ services:
       EUREKA_URL: ${EUREKA_URL}
       JWT_ISSUER_URI: ${JWT_ISSUER_URI}
       POSTGRE_SQL: ${POSTGRE_SQL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     depends_on:
       - config-service
       - discovery-service
@@ -96,7 +97,6 @@ services:
       APP_NAME: notification-service
       CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
       EUREKA_URL: ${EUREKA_URL}
-      JWT_ISSUER_URI: ${JWT_ISSUER_URI}
       POSTGRE_SQL: ${POSTGRE_SQL}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
     depends_on:
