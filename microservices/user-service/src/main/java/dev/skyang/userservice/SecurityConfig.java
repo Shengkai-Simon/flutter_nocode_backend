@@ -2,6 +2,7 @@ package dev.skyang.userservice;
 
 import dev.skyang.userservice.config.ApiPaths;
 import dev.skyang.userservice.config.CustomAccessDeniedHandler;
+import dev.skyang.userservice.config.InternalApiSecretFilter;
 import dev.skyang.userservice.config.JwtAuthConverter;
 import dev.skyang.userservice.config.RoleConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +14,20 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
-    private JwtAuthConverter jwtAuthConverter; // Inject custom converter
+    private JwtAuthConverter jwtAuthConverter;
 
     @Autowired
     private CustomAccessDeniedHandler customAccessDeniedHandler;
+
+    @Autowired
+    private InternalApiSecretFilter internalApiSecretFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -31,26 +36,26 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions ->
                         exceptions.accessDeniedHandler(customAccessDeniedHandler)
                 )
+                // Before the standard authentication filter, insert our custom internal API key filter.
+                .addFilterBefore(internalApiSecretFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authz -> authz
                         // --- Publicly accessible endpoints ---
                         .requestMatchers(
                                 "/actuator/**",
-                                ApiPaths.PUBLIC_BASE + "/**",
-                                "/api/internal/**"
+                                ApiPaths.PUBLIC_BASE + "/**"
                         ).permitAll()
 
-                        // --- Endpoints that require specific permissions ---
-                        // Only users with "ROLE_ADMIN" permissions can access all paths under /api/admin/
-                        .requestMatchers(ApiPaths.ADMIN_BASE + "/**").hasAuthority(RoleConstants.ROLE_ADMIN)
+                        // Allow internal API endpoints through to internalApiSecretFilter for security validation
+                        .requestMatchers("/api/internal/**").permitAll()
 
-                        // --- Endpoints that require authentication but don't require a specific role ---
+                        // --- Endpoints that require specific permissions ---
+                        .requestMatchers(ApiPaths.ADMIN_BASE + "/**").hasAuthority(RoleConstants.ROLE_ADMIN)
                         .requestMatchers(ApiPaths.API_BASE + ApiPaths.ME).hasAnyAuthority(RoleConstants.ROLE_USER, RoleConstants.ROLE_ADMIN)
 
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        // Use our custom converter to parse JWTs
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
                 );
 
