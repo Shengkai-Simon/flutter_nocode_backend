@@ -5,18 +5,45 @@ spring:
   application:
     name: ${APP_NAME:api-gateway}
   
+  # === Add Redis connection configuration ===
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: 6379
+
   cloud:
     gateway:
       discovery:
         locator:
           enabled: true
-      default-filters:
-        - name: StripPrefix
-          args:
-            parts: 1
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:9000/oauth2/jwks}
+      routes:
+        - id: user-service-route
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/**
+          filters:
+            - StripPrefix=1
+            # <<< Apply Rate Limit Filter >>>
+            - name: RequestRateLimiter
+              args:
+                # Use the bean we defined in RateLimiterConfig
+                key-resolver: "#{@ipKeyResolver}"
+                # Configure the Redis rate limiter
+                redis-rate-limiter:
+                  replenishRate: 10   # Token bucket fill rate per second: Allows 10 requests per second
+                  burstCapacity: 20   # Total Token Bucket Capacity: Allows 20 instantaneous requests
+
+        - id: auth-service-route
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth-service/**
+          filters:
+            - StripPrefix=1
+            # <<< also applies a rate-limiting >>> to the authentication service
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter:
+                  replenishRate: 10
+                  burstCapacity: 20
