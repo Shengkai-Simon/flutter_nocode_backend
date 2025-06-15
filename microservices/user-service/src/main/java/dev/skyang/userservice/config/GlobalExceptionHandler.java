@@ -3,6 +3,7 @@ package dev.skyang.userservice.config;
 import dev.skyang.userservice.dto.GlobalApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -16,6 +17,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<GlobalApiResponse<Object>> handleIllegalStateException(IllegalStateException ex) {
         // For client errors like this, we return a 400 Bad Request.
         GlobalApiResponse<Object> response = GlobalApiResponse.error(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handles validation exceptions (@Valid).
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<GlobalApiResponse<Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        // Extract more detailed error messages from the EX, here to return a generic message directly for simplification
+        GlobalApiResponse<Object> response = GlobalApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Invalid input provided.");
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
