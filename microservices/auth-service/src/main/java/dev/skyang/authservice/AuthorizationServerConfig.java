@@ -61,6 +61,7 @@ public class AuthorizationServerConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(ApiPaths.PUBLIC_BASE + ApiPaths.LOGIN).permitAll()
+                        .requestMatchers(ApiPaths.API_BASE + ApiPaths.LOGOUT).authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(Customizer.withDefaults());

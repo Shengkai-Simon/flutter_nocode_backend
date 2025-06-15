@@ -1,11 +1,18 @@
 package dev.skyang.userservice.config;
 
 import dev.skyang.userservice.dto.GlobalApiResponse;
+import dev.skyang.userservice.dto.ValidationErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice(basePackages = "dev.skyang.userservice.controller.api")
 public class GlobalExceptionHandler {
@@ -25,10 +32,20 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<GlobalApiResponse<Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        // Extract more detailed error messages from the EX, here to return a generic message directly for simplification
-        GlobalApiResponse<Object> response = GlobalApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Invalid input provided.");
+        // Collect error information from all fields into a single list<ValidationErrorResponse>
+        List<ValidationErrorResponse> errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> new ValidationErrorResponse(error.getField(), error.getDefaultMessage()))
+                .collect(Collectors.toList());
+
+        // Returns the List with all validation errors as data
+        GlobalApiResponse<Object> response = new GlobalApiResponse<>(
+                HttpStatus.BAD_REQUEST.value(),
+                "Failed to verify the input parameters", // A general reminder
+                errors // A specific, fixed-structure list of error details
+        );
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
 
     /**
      * A generic handler for all other exceptions.
