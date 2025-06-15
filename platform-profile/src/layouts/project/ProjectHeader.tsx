@@ -3,9 +3,17 @@ import {Moon, Sun} from "lucide-react";
 import {useThemeStore} from "@/stores/useThemeStore.ts";
 import {cn} from "@/lib/utils.ts";
 import {SidebarTrigger} from "@/components/ui/sidebar.tsx";
+import {useNavigate} from "react-router-dom";
+import {routes} from "@/lib/routes.ts";
 
-export default function ProjectHeader({ className, ...props }: React.ComponentProps<"div">) {
+export default function ProjectHeader({className, ...props}: React.ComponentProps<"div">) {
     const {toggle, theme} = useThemeStore()
+
+    const navigate = useNavigate()
+    const handleCreatProject = () => {
+        navigate(routes.editor)
+    }
+
     return (
         <div className={cn("", className)} {...props}>
             <SidebarTrigger/>
@@ -14,7 +22,7 @@ export default function ProjectHeader({ className, ...props }: React.ComponentPr
                 <label className="text-sm text-muted-foreground">Manage your project below</label>
             </div>
             <div className="flex items-center gap-5">
-                <Button>Create Project</Button>
+                <Button onClick={handleCreatProject}>Create Project</Button>
                 <Button onClick={toggle} size="icon" aria-label="Toggle theme">
                     {theme === "dark" ? <Sun className="h-5 w-5"/> : <Moon className="h-5 w-5"/>}
                 </Button>
