@@ -11,5 +11,5 @@ public final class ApiPaths {
     // --- Expose the path ---
     public static final String PUBLIC_BASE = API_BASE + PUBLIC_SUB_PATH;
     public static final String LOGIN = "/login";
-
+    public static final String LOGOUT = "/logout";
 }
