@@ -8,7 +8,7 @@ public enum UserStatus {
      * The user has registered but has not yet verified their email.
      * The account is not active.
      */
-    AWAITING_VERIFICATION, // 原 PENDING_VERIFICATION
+    AWAITING_VERIFICATION,
 
     /**
      * The user has successfully verified their email and the account is fully active.
