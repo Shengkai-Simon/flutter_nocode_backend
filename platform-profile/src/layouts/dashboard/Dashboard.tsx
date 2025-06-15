@@ -14,9 +14,7 @@ export default function DashboardLayout() {
                 <SidebarInset>
                     <div className="flex flex-col flex-1 h-screen">
                         <ProjectHeader className="flex flex-wrap flex-row h-[80px] px-5 py-3 gap-5 items-center"/>
-
-                        <ProjectList
-                            className="flex-1 p-5 gap-5 overflow-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 "/>
+                        <ProjectList className="flex-1 p-5 gap-5 overflow-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 "/>
                     </div>
                 </SidebarInset>
             </div>

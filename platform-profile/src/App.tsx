@@ -1,8 +1,10 @@
-import DashboardLayout from "@/layouts/dashboard/Dashboard.tsx";
+import AppRoutes from "@/routes";
+import {BrowserRouter} from "react-router-dom";
 
-function App() {
-    return (<DashboardLayout/>)
-    // return (<Test/>)
+export default function App() {
+    return (
+        <BrowserRouter>
+            <AppRoutes/>
+        </BrowserRouter>
+    )
 }
-
-export default App
