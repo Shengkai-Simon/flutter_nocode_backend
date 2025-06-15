@@ -5,6 +5,11 @@ spring:
   application:
     name: ${APP_NAME:auth-service}
 
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: 6379
+
   datasource:
     url: ${POSTGRE_SQL:jdbc:postgresql://localhost:5432}/authdb
     username: user

@@ -1,4 +1,13 @@
-version: '3.9'
+x-simple-service-env: &simple-service-env
+  CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+  EUREKA_URL: ${EUREKA_URL}
+
+x-resource-server-env: &resource-server-env
+  CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+  EUREKA_URL: ${EUREKA_URL}
+  JWT_ISSUER_URI: ${JWT_ISSUER_URI}
+  INTERNAL_API_KEY_PRIMARY: ${INTERNAL_API_KEY_PRIMARY}
+  INTERNAL_API_KEY_SECONDARY: ${INTERNAL_API_KEY_SECONDARY}
 
 services:
   config-service:
@@ -25,9 +34,7 @@ services:
     environment:
       SERVER_PORT: 8761
       APP_NAME: discovery-service
-      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
-      EUREKA_URL: ${EUREKA_URL}
-      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI}
+      <<: *simple-service-env
     depends_on:
       - config-service
     networks:
@@ -41,9 +48,8 @@ services:
     environment:
       SERVER_PORT: 8080
       APP_NAME: api-gateway
-      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
-      EUREKA_URL: ${EUREKA_URL}
-      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI}
+      JWT_ISSUER_URI: ${JWT_ISSUER_URI}
+      <<: *simple-service-env
     depends_on:
       - config-service
       - discovery-service
@@ -58,10 +64,9 @@ services:
     environment:
       SERVER_PORT: 9000
       APP_NAME: auth-service
-      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
-      EUREKA_URL: ${EUREKA_URL}
-      JWT_ISSUER_URI: ${JWT_ISSUER_URI}
       POSTGRE_SQL: ${POSTGRE_SQL}
+      REDIS_HOST: ${REDIS_HOST}
+      <<: *resource-server-env
     depends_on:
       - config-service
       - discovery-service
@@ -76,10 +81,29 @@ services:
     environment:
       SERVER_PORT: 9100
       APP_NAME: user-service
-      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
-      EUREKA_URL: ${EUREKA_URL}
-      JWT_ISSUER_URI: ${JWT_ISSUER_URI}
       POSTGRE_SQL: ${POSTGRE_SQL}
+      REDIS_HOST: ${REDIS_HOST}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      <<: *resource-server-env
+    depends_on:
+      - config-service
+      - discovery-service
+    networks:
+      - backend
+
+  notification-service:
+    build: ./microservices/notification-service
+    container_name: notification-service
+    ports:
+      - "9400:9400"
+    environment:
+      SERVER_PORT: 9400
+      APP_NAME: notification-service
+      POSTGRE_SQL: ${POSTGRE_SQL}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      <<: *simple-service-env
     depends_on:
       - config-service
       - discovery-service
