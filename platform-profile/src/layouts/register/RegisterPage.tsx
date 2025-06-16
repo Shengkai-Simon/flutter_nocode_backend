@@ -7,10 +7,12 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {api, ApiError} from "@/lib/api.ts";
 import {routes} from "@/lib/routes.ts";
+import {PasswordInput} from "@/components/ui/PasswordInput.tsx";
 
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
     const navigate = useNavigate();
@@ -20,6 +22,21 @@ export default function RegisterPage() {
         setError("");
         setMessage("");
 
+        // --- 1. Front-end validation rules ---
+        if (password.length < 8) {
+            setError("Password must be at least 8 characters long.");
+            return;
+        }
+        if (!/^(?=.*[A-Za-z])(?=.*\d)/.test(password)) {
+            setError("Password must contain at least one letter and one number.");
+            return;
+        }
+        if (password !== confirmPassword) {
+            setError("Passwords do not match.");
+            return;
+        }
+
+        // --- 2. Call the API ---
         try {
             await api.post('/user-service/api/public/register', { email, password });
 
@@ -57,12 +74,20 @@ export default function RegisterPage() {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="password">Password</Label>
-                        <Input
+                        <PasswordInput
                             id="password"
-                            type="password"
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="confirm-password">Confirm Password</Label>
+                        <PasswordInput
+                            id="confirm-password"
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                         />
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
