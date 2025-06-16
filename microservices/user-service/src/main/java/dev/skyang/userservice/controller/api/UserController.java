@@ -73,13 +73,12 @@ public class UserController {
         return Map.of("message", "Your password has been successfully reset.");
     }
 
-    // --- Protected Endpoint (path remains unchanged) ---
-
     @GetMapping(ApiPaths.ME)
-    public Map<String, String> getCurrentUser(Principal principal) {
+    public UserProfileResponse getCurrentUser(Principal principal) {
         if (principal == null) {
             throw new IllegalStateException("User not authenticated.");
         }
-        return Map.of("message", "Hello, your email is: " + principal.getName());
+        // principal.getName() In JWT configuration, this is the user's mailbox
+        return userService.findUserProfileByEmail(principal.getName());
     }
 }
