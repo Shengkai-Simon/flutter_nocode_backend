@@ -66,7 +66,7 @@ export default function RegisterPage() {
                         <FormField control={form.control} name="email" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t('register.emailLabel')}</FormLabel>
-                                <FormControl><Input type="email" placeholder="name@example.com" {...field} /></FormControl>
+                                <FormControl><Input type="email" {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}/>

@@ -75,7 +75,7 @@ export default function LoginPage() {
                                 <FormItem>
                                     <FormLabel>{t('login.emailLabel')}</FormLabel>
                                     <FormControl>
-                                        <Input type="email" placeholder="name@example.com" {...field} />
+                                        <Input type="email" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
