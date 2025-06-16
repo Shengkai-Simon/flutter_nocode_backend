@@ -45,14 +45,20 @@ export default function LoginPage() {
         setApiError("");
         setIsSubmitting(true);
         try {
-            const data = await api.post<{ accessToken: string }>('/auth-service/api/public/login', values);
-            login(data.accessToken);
-            navigate(routes.dashboard);
+            const responseData = await api.post<{ accessToken: string }>('/auth-service/api/public/login', values);
+            const token = responseData.accessToken;
+            if (token) {
+                await login(token);
+                navigate(routes.dashboard);
+            } else {
+                throw new Error("Login successful, but no token received.");
+            }
         } catch (err) {
             if (err instanceof ApiError) {
                 setApiError(err.message);
             } else {
                 setApiError(t("error.unknown"));
+                console.error(err);
             }
         } finally {
             setIsSubmitting(false);
