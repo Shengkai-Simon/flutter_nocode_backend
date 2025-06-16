@@ -401,4 +401,15 @@ public class UserService {
             log.warn("User {} did not have role {} to revoke.", user.getEmail(), roleName);
         }
     }
+
+    /**
+     * Find users based on their email address and return personal information for front-end display
+     * @param email The user's mailbox, which is the name of the principal
+     * @return UserProfileResponse DTO
+     */
+    public UserProfileResponse findUserProfileByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User with email " + email + " not found."));
+        return new UserProfileResponse(user);
+    }
 }
