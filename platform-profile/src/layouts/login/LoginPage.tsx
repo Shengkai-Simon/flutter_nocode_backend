@@ -1,80 +1,109 @@
-import * as React from "react";
-import {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import { PasswordInput } from "@/components/ui/PasswordInput";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {useEffect, useState} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
+import {useTranslation} from "react-i18next";
+import {Loader2} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
+import {PasswordInput} from "@/components/ui/PasswordInput";
 import {useAuthStore} from "@/stores/useAuthStore";
-import {api, ApiError} from "@/lib/api.ts";
-import {routes} from "@/lib/routes.ts";
+import {api, ApiError} from "@/lib/api";
+import {routes} from "@/lib/routes";
+
+const formSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(1),
+});
+type FormValues = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const { t } = useTranslation();
+    const [apiError, setApiError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuthStore();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
+    const form = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: { email: "", password: "" },
+    });
 
+    const { setValue } = form;
+    useEffect(() => {
+        const emailFromState = location.state?.email;
+        if (emailFromState) {
+            setValue('email', emailFromState);
+        }
+    }, [location.state, setValue]);
+
+    const onSubmit = async (values: FormValues) => {
+        setApiError("");
+        setIsSubmitting(true);
         try {
-            const data = await api.post<{ accessToken: string }>('/auth-service/api/public/login', { email, password });
-
+            const data = await api.post<{ accessToken: string }>('/auth-service/api/public/login', values);
             login(data.accessToken);
-            navigate("/");
-
+            navigate(routes.dashboard);
         } catch (err) {
             if (err instanceof ApiError) {
-                setError(err.message);
+                setApiError(err.message);
             } else {
-                setError("Something went wrong. Please try again.");
-                console.error(err);
+                setApiError(t("error.unknown"));
             }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
         <Card className="w-full max-w-sm">
             <CardHeader>
-                <CardTitle className="text-2xl">Login</CardTitle>
-                <CardDescription>
-                    Enter your credentials to access your account.
-                </CardDescription>
+                <CardTitle className="text-2xl">{t('login.title')}</CardTitle>
+                <CardDescription>{t('login.description')}</CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleSubmit} className="grid gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="name@example.com"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('login.emailLabel')}</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" placeholder="name@example.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <PasswordInput
-                            id="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                        <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('login.passwordLabel')}</FormLabel>
+                                    <FormControl>
+                                        <PasswordInput {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                    </div>
-                    {error && <p className="text-sm text-destructive">{error}</p>}
-                    <Button type="submit" className="w-full">
-                        Log In
-                    </Button>
-                    <Button variant="outline" className="w-full" type="button" onClick={() => navigate(routes.register)}>
-                    Don't have an account? Sign Up
-                    </Button>
-                </form>
+                        {apiError && <p className="text-sm font-medium text-destructive">{apiError}</p>}
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {t('login.button')}
+                        </Button>
+                        <Button variant="outline" className="w-full" type="button" onClick={() => navigate(routes.register)} disabled={isSubmitting}>
+                            {t('login.registerLink')}
+                        </Button>
+                    </form>
+                </Form>
             </CardContent>
         </Card>
     );
