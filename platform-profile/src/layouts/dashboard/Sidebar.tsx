@@ -36,15 +36,14 @@ export default function DashboardSidebar({ className, ...props }: React.Componen
     const { logout, user } = useAuthStore();
     const navigate = useNavigate();
 
-    const handleLogout = async () => {
-        try {
-            await api.post('/auth-service/api/logout', {});
-        } catch (error) {
-            console.error("Failed to call logout API:", error);
-        } finally {
-            logout();
-            navigate(routes.login);
-        }
+    const handleLogout = () => {
+        logout();
+        navigate(routes.login);
+
+        api.post('/auth-service/api/logout', {})
+            .catch(error => {
+                console.error("Background logout API call failed:", error);
+            });
     };
 
     return (
