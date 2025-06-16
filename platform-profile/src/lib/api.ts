@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/stores/useAuthStore";
+import {useAuthStore} from "@/stores/useAuthStore";
 
 export class ApiError extends Error {
     status: number;
@@ -22,30 +22,23 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 
     const response = await fetch(url, options);
 
-    // First, check for errors at the HTTP level (e.g. 404 Not Found, 500 Server Error)
-    if (!response.ok) {
-        // For HTTP states that are not 2xx, we try to parse possible error bodies
-        try {
-            const errorBody = await response.json();
-            throw new ApiError(errorBody.message || response.statusText, response.status, errorBody.data);
-        } catch (e) {
-            // If the error body is not in JSON format, an error based on HTTP state is thrown
-            throw new ApiError(response.statusText, response.status);
-        }
+    let responseData;
+    try {
+        responseData = await response.json();
+    } catch (error) {
+        console.error("Failed to parse JSON response:", error);
+        throw new ApiError(
+            `Request failed with status ${response.status}: ${response.statusText}`,
+            response.status
+        );
     }
 
-    // If the HTTP status is OK (2xx), we parse our custom business layer encapsulation
-    const responseData = await response.json();
-
-    // Checking the Service Layer Status Code 'code'
-    if (responseData.code === 200) {
-        // Business success, go straight back to the 'data' part of the core
+    if (responseData && responseData.code === 200) {
         return responseData.data as T;
     } else {
-        // If a service fails to verify a parameter and an error containing backend information is thrown
         throw new ApiError(
-            responseData.message || 'An error occurred',
-            responseData.code,
+            responseData.message || `An error occurred with code ${responseData.code}`,
+            responseData.code || response.status,
             responseData.data
         );
     }
