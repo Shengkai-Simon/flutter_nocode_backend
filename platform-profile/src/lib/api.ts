@@ -1,17 +1,10 @@
-import {useAuthStore} from "@/stores/useAuthStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
-// Wrong data structure type definition returned by the backend
-interface ApiErrorData {
-    field: string;
-    message: string;
-}
-
-// Custom error classes to carry richer error messages
 export class ApiError extends Error {
     status: number;
-    errorData?: ApiErrorData[];
+    errorData?: any[];
 
-    constructor(message: string, status: number, errorData?: ApiErrorData[]) {
+    constructor(message: string, status: number, errorData?: any[]) {
         super(message);
         this.name = 'ApiError';
         this.status = status;
@@ -19,47 +12,42 @@ export class ApiError extends Error {
     }
 }
 
-// API request function
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
-    // Get the token from the Zustand store
     const { token } = useAuthStore.getState();
-
-    // Prepare the default request header
-    const defaultHeaders: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-
-    // If a token exists, it is added to the Authorization header
+    const defaultHeaders: HeadersInit = { 'Content-Type': 'application/json' };
     if (token) {
         defaultHeaders['Authorization'] = `Bearer ${token}`;
     }
-
-    // Merge the default header and the user's incoming header
     options.headers = { ...defaultHeaders, ...options.headers };
 
-    // Initiate a fetch request
     const response = await fetch(url, options);
 
-    // Try to parse the response body
-    let responseData;
-    try {
-        responseData = await response.json();
-    } catch (error) {
-        // If the response body is not valid JSON (e.g. an empty response), but the status code is successful
-        if (response.ok) {
-            return {} as T; // Succeeds but has no content, returns an empty object
+    // First, check for errors at the HTTP level (e.g. 404 Not Found, 500 Server Error)
+    if (!response.ok) {
+        // For HTTP states that are not 2xx, we try to parse possible error bodies
+        try {
+            const errorBody = await response.json();
+            throw new ApiError(errorBody.message || response.statusText, response.status, errorBody.data);
+        } catch (e) {
+            // If the error body is not in JSON format, an error based on HTTP state is thrown
+            throw new ApiError(response.statusText, response.status);
         }
-        // If the status code fails and there is no JSON, a generic error is thrown
-        throw new ApiError(response.statusText, response.status);
     }
 
-    // Check if the response was successful
-    if (response.ok) {
-        return responseData as T;
+    // If the HTTP status is OK (2xx), we parse our custom business layer encapsulation
+    const responseData = await response.json();
+
+    // Checking the Service Layer Status Code 'code'
+    if (responseData.code === 200) {
+        // Business success, go straight back to the 'data' part of the core
+        return responseData.data as T;
     } else {
-        const detailedMessage = responseData?.data?.[0]?.message;
-        const errorMessage = detailedMessage || responseData.message || 'An unknown error occurred';
-        throw new ApiError(errorMessage, response.status, responseData.data);
+        // If a service fails to verify a parameter and an error containing backend information is thrown
+        throw new ApiError(
+            responseData.message || 'An error occurred',
+            responseData.code,
+            responseData.data
+        );
     }
 }
 

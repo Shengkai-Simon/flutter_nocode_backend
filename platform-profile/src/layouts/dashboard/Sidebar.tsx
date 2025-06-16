@@ -17,6 +17,7 @@ import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip"
 import {api} from "@/lib/api.ts";
 import * as React from "react";
 import {routes} from "@/lib/routes.ts";
+import {UserAvatar} from "@/components/ui/UserAvatar.tsx";
 
 interface Item {
     title: string;
@@ -32,7 +33,7 @@ const items: Item[] = [
 
 export default function DashboardSidebar({ className, ...props }: React.ComponentProps<"div">) {
     // --- Get both the logout method and the token from the store ---
-    const { logout } = useAuthStore();
+    const { logout, user } = useAuthStore();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -70,7 +71,7 @@ export default function DashboardSidebar({ className, ...props }: React.Componen
                     <div className="flex items-center justify-between">
                        {/* Left: Avatar and text */}
                         <div className="flex items-center gap-3">
-                            <img src="https://picsum.photos/200/300" alt="avatar" className="w-10 h-10 rounded-full"/>
+                            <UserAvatar email={user?.email} />
                         </div>
                         {/* Right: Logout icon button with a hint */}
                         <Tooltip>
@@ -84,7 +85,7 @@ export default function DashboardSidebar({ className, ...props }: React.Componen
                             </TooltipContent>
                         </Tooltip>
                     </div>
-                    <CardTitle className="mt-3">UserName</CardTitle>
+                    <CardTitle className="text-sm">{user?.email || "Loading..."}</CardTitle>
                     <CardDescription>Welcome to platform</CardDescription>
                 </Card>
 
