@@ -1,6 +1,7 @@
 import {create} from 'zustand';
 import {persist} from 'zustand/middleware';
 import {api} from '@/lib/api';
+import {apiPaths} from "@/lib/apiPaths.ts";
 
 interface User {
     id: number;
@@ -25,8 +26,7 @@ export const useAuthStore = create<AuthState>()(
             login: async (token: string) => {
                 set({ token, isAuthenticated: true });
                 try {
-                    console.log('/auth-service/api/public/login: token ->',token);
-                    const userData = await api.get<User>('/user-service/api/me');
+                    const userData = await api.get<User>(apiPaths.me);
                     set({ user: userData });
                 } catch (error) {
                     console.error("Failed to fetch user info:", error);

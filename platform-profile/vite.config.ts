@@ -14,8 +14,7 @@ export default defineConfig({
   // --- server config ---
   server: {
     proxy: {
-      '/auth-service': 'http://localhost:8080',
-      '/user-service': 'http://localhost:8080',
+      '/api': 'http://localhost:8080',
     }
   }
 })

@@ -16,8 +16,9 @@ import {useNavigate} from "react-router-dom";
 import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip";
 import {api} from "@/lib/api.ts";
 import * as React from "react";
-import {routes} from "@/lib/routes.ts";
+import {navRoutes} from "@/lib/navRoutes.ts";
 import {UserAvatar} from "@/components/ui/UserAvatar.tsx";
+import {apiPaths} from "@/lib/apiPaths.ts";
 
 interface Item {
     title: string;
@@ -38,9 +39,9 @@ export default function DashboardSidebar({ className, ...props }: React.Componen
 
     const handleLogout = () => {
         logout();
-        navigate(routes.login);
+        navigate(navRoutes.login);
 
-        api.post('/auth-service/api/logout', {})
+        api.post(apiPaths.logout, {})
             .catch(error => {
                 console.error("Background logout API call failed:", error);
             });
