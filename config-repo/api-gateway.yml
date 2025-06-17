@@ -21,9 +21,13 @@ spring:
         - id: user-service-route
           uri: lb://user-service
           predicates:
-            - Path=/user-service/**
+            # 1. 匹配以 /api/users/ 开头的路径
+            - Path=/api/users/**
           filters:
-            - StripPrefix=1
+            # 2. 同理，进行路径重写
+            # 例如: /api/users/me -> /api/me
+            # 例如: /api/users/public/register -> /api/public/register
+            - RewritePath=/api/users/(?<path>.*), /api/$\{path}
             # <<< Apply Rate Limit Filter >>>
             - name: RequestRateLimiter
               args:
@@ -37,9 +41,14 @@ spring:
         - id: auth-service-route
           uri: lb://auth-service
           predicates:
-            - Path=/auth-service/**
+            # 1. 匹配您建议的、以 /api/auth/ 开头的优雅路径
+            - Path=/api/auth/**
           filters:
-            - StripPrefix=1
+              # 2. 使用 RewritePath 将客户端请求的路径重写为后端服务能识别的路径
+              # 例如: /api/auth/public/login -> /api/public/login
+              # /auth/api/public/login
+              # 例如: /api/auth/logout -> /api/logout
+            - RewritePath=/api/auth/(?<path>.*), /api/$\{path}
             # <<< also applies a rate-limiting >>> to the authentication service
             - name: RequestRateLimiter
               args:

@@ -18,8 +18,8 @@ public class ApiGatewaySecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(
                                 "/actuator/**",
-                                // Match the /api/public/** path under all services
-                                "/*/api/public/**"
+                                "/api/auth/public/**",
+                                "/api/users/public/**"
                         ).permitAll()
                         // All other requests require authentication
                         .anyExchange().authenticated()
