@@ -12,7 +12,8 @@ import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/
 import {Input} from "@/components/ui/input";
 import {PasswordInput} from "@/components/ui/PasswordInput";
 import {api, ApiError} from "@/lib/api";
-import {routes} from "@/lib/routes";
+import {navRoutes} from "@/lib/navRoutes.ts";
+import {apiPaths} from "@/lib/apiPaths.ts";
 
 const formSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address." }),
@@ -41,8 +42,8 @@ export default function RegisterPage() {
         setApiError("");
         setIsSubmitting(true);
         try {
-            await api.post('/user-service/api/public/register', { email: values.email, password: values.password });
-            navigate(routes.verify, { state: { email: values.email } });
+            await api.post(apiPaths.register, { email: values.email, password: values.password });
+            navigate(navRoutes.verify, { state: { email: values.email } });
         } catch (err) {
             if (err instanceof ApiError) {
                 setApiError(err.message);
@@ -89,7 +90,7 @@ export default function RegisterPage() {
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {t('register.button')}
                         </Button>
-                        <Button variant="outline" className="w-full" type="button" onClick={() => navigate(routes.login)} disabled={isSubmitting}>
+                        <Button variant="outline" className="w-full" type="button" onClick={() => navigate(navRoutes.login)} disabled={isSubmitting}>
                             {t('register.loginLink')}
                         </Button>
                     </form>

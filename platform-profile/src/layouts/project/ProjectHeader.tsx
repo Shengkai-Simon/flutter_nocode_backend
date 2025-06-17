@@ -4,14 +4,14 @@ import {useThemeStore} from "@/stores/useThemeStore.ts";
 import {cn} from "@/lib/utils.ts";
 import {SidebarTrigger} from "@/components/ui/sidebar.tsx";
 import {useNavigate} from "react-router-dom";
-import {routes} from "@/lib/routes.ts";
+import {navRoutes} from "@/lib/navRoutes.ts";
 
 export default function ProjectHeader({className, ...props}: React.ComponentProps<"div">) {
     const {toggle, theme} = useThemeStore()
 
     const navigate = useNavigate()
     const handleCreatProject = () => {
-        navigate(routes.editor)
+        navigate(navRoutes.editor)
     }
 
     return (

@@ -1,7 +1,7 @@
 import {Route, Routes} from "react-router-dom";
 import DashboardLayout from "@/layouts/dashboard/Dashboard.tsx";
 import EditorLayout from "@/layouts/editor/Editor.tsx";
-import {routes} from "@/lib/routes.ts";
+import {navRoutes} from "@/lib/navRoutes.ts";
 import AuthLayout from "@/layouts/auth/AuthLayout.tsx";
 import LoginPage from "@/layouts/login/LoginPage.tsx";
 import RegisterPage from "@/layouts/register/RegisterPage.tsx";
@@ -13,15 +13,15 @@ export default function AppRoutes() {
         <Routes>
             {/* Login and registration */}
             <Route element={<AuthLayout />}>
-                <Route path={routes.login} element={<LoginPage />} />
-                <Route path={routes.register} element={<RegisterPage />} />
-                <Route path={routes.verify} element={<VerifyPage />} />
+                <Route path={navRoutes.login} element={<LoginPage />} />
+                <Route path={navRoutes.register} element={<RegisterPage />} />
+                <Route path={navRoutes.verify} element={<VerifyPage />} />
             </Route>
 
-            {/* Protected routes */}
+            {/* Protected navRoutes */}
             <Route element={<ProtectedRoute />}>
-                <Route path={routes.dashboard} element={<DashboardLayout />} />
-                <Route path={routes.editor} element={<EditorLayout />} />
+                <Route path={navRoutes.dashboard} element={<DashboardLayout />} />
+                <Route path={navRoutes.editor} element={<EditorLayout />} />
             </Route>
         </Routes>
     );

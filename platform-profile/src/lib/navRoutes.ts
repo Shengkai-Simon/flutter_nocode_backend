@@ -1,4 +1,4 @@
-export const routes = {
+export const navRoutes = {
     dashboard: "/",
     editor: "/editor",
     login: "/login",

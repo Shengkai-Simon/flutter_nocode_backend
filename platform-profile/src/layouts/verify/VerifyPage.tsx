@@ -11,7 +11,8 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
 import {api, ApiError} from "@/lib/api";
-import {routes} from "@/lib/routes";
+import {navRoutes} from "@/lib/navRoutes.ts";
+import {apiPaths} from "@/lib/apiPaths.ts";
 
 const formSchema = z.object({
     code: z.string().length(6, { message: "Please enter a 6-digit code." }),
@@ -34,7 +35,7 @@ export default function VerifyPage() {
         defaultValues: { code: "" },
     });
 
-    useEffect(() => { if (!email) { navigate(routes.register); } }, [email, navigate]);
+    useEffect(() => { if (!email) { navigate(navRoutes.register); } }, [email, navigate]);
     useEffect(() => {
         if (resendCooldown > 0) {
             const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
@@ -47,10 +48,10 @@ export default function VerifyPage() {
         setMessage("");
         setIsVerifying(true);
         try {
-            await api.post('/user-service/api/public/verify', { email, code: values.code });
+            await api.post(apiPaths.verify, { email, code: values.code });
             setMessage(t("verify.success"));
             await new Promise(resolve => setTimeout(resolve, 2000));
-            navigate(routes.login, { state: { email } });
+            navigate(navRoutes.login, { state: { email } });
         } catch (err) {
             if (err instanceof ApiError) { setApiError(err.message); }
             else { setApiError(t("error.unknown")); }
@@ -63,7 +64,7 @@ export default function VerifyPage() {
         setMessage("");
         setIsResending(true);
         try {
-            await api.post('/user-service/api/public/resend-verification', { email });
+            await api.post(apiPaths.resendVerification, { email });
             setMessage(t("verify.codeSent"));
             setResendCooldown(60);
         } catch (err) {

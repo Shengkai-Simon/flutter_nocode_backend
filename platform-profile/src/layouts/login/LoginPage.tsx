@@ -12,7 +12,8 @@ import {Input} from "@/components/ui/input";
 import {PasswordInput} from "@/components/ui/PasswordInput";
 import {useAuthStore} from "@/stores/useAuthStore";
 import {api, ApiError} from "@/lib/api";
-import {routes} from "@/lib/routes";
+import {navRoutes} from "@/lib/navRoutes.ts";
+import {apiPaths} from "@/lib/apiPaths.ts";
 
 const formSchema = z.object({
     email: z.string().email(),
@@ -45,11 +46,11 @@ export default function LoginPage() {
         setApiError("");
         setIsSubmitting(true);
         try {
-            const responseData = await api.post<{ accessToken: string }>('/auth-service/api/public/login', values);
+            const responseData = await api.post<{ accessToken: string }>(apiPaths.login, values);
             const token = responseData.accessToken;
             if (token) {
                 await login(token);
-                navigate(routes.dashboard);
+                navigate(navRoutes.dashboard);
             } else {
                 throw new Error("Login successful, but no token received.");
             }
@@ -105,7 +106,7 @@ export default function LoginPage() {
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {t('login.button')}
                         </Button>
-                        <Button variant="outline" className="w-full" type="button" onClick={() => navigate(routes.register)} disabled={isSubmitting}>
+                        <Button variant="outline" className="w-full" type="button" onClick={() => navigate(navRoutes.register)} disabled={isSubmitting}>
                             {t('login.registerLink')}
                         </Button>
                     </form>
