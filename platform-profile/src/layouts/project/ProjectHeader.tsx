@@ -3,15 +3,13 @@ import {Moon, Sun} from "lucide-react";
 import {useThemeStore} from "@/stores/useThemeStore.ts";
 import {cn} from "@/lib/utils.ts";
 import {SidebarTrigger} from "@/components/ui/sidebar.tsx";
-import {useNavigate} from "react-router-dom";
-import {navRoutes} from "@/lib/navRoutes.ts";
+import * as React from "react";
 
 export default function ProjectHeader({className, ...props}: React.ComponentProps<"div">) {
     const {toggle, theme} = useThemeStore()
 
-    const navigate = useNavigate()
     const handleCreatProject = () => {
-        navigate(navRoutes.editor)
+        window.location.href = "/flutter/";
     }
 
     return (
