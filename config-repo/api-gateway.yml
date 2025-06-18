@@ -21,12 +21,10 @@ spring:
         - id: user-service-route
           uri: lb://user-service
           predicates:
-            # 1. 匹配以 /api/users/ 开头的路径
             - Path=/api/users/**
           filters:
-            # 2. 同理，进行路径重写
-            # 例如: /api/users/me -> /api/me
-            # 例如: /api/users/public/register -> /api/public/register
+            # For example: /api/users/me -> /api/me
+            # For example: /api/users/public/register -> /api/public/register
             - RewritePath=/api/users/(?<path>.*), /api/$\{path}
             # <<< Apply Rate Limit Filter >>>
             - name: RequestRateLimiter
@@ -41,15 +39,25 @@ spring:
         - id: auth-service-route
           uri: lb://auth-service
           predicates:
-            # 1. 匹配您建议的、以 /api/auth/ 开头的优雅路径
             - Path=/api/auth/**
           filters:
-              # 2. 使用 RewritePath 将客户端请求的路径重写为后端服务能识别的路径
-              # 例如: /api/auth/public/login -> /api/public/login
-              # /auth/api/public/login
-              # 例如: /api/auth/logout -> /api/logout
+              # For example: /api/auth/public/login -> /api/public/login
+              # For example: /api/auth/logout -> /api/logout
             - RewritePath=/api/auth/(?<path>.*), /api/$\{path}
             # <<< also applies a rate-limiting >>> to the authentication service
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter:
+                  replenishRate: 10
+                  burstCapacity: 20
+
+        - id: project-service-route
+          uri: lb://project-service
+          predicates:
+            - Path=/api/projects/**
+          filters:
+            - RewritePath=/api/projects/(?<path>.*), /api/projects/$\{path}
             - name: RequestRateLimiter
               args:
                 key-resolver: "#{@ipKeyResolver}"
