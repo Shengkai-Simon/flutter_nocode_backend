@@ -38,13 +38,13 @@ export default function DashboardSidebar({ className, ...props }: React.Componen
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        logout();
-        navigate(navRoutes.login);
-
         api.post(apiPaths.logout, {})
             .catch(error => {
                 console.error("Background logout API call failed:", error);
             });
+
+        logout();
+        navigate(navRoutes.login);
     };
 
     return (
