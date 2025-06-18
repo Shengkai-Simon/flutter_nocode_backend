@@ -1,0 +1,11 @@
+services:
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+#    depends_on:
+#    Make sure that your app service is ready before Nginx starts
+#      - react-app
+#      - flutter-app
