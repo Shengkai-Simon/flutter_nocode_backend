@@ -93,6 +93,22 @@ services:
     networks:
       - backend
 
+  project-service:
+    build: ./microservices/project-service
+    container_name: project-service
+    ports:
+      - "9200:9200"
+    environment:
+      SERVER_PORT: 9200
+      APP_NAME: project-service
+      POSTGRE_SQL: ${POSTGRE_SQL}
+      <<: *resource-server-env
+    depends_on:
+      - config-service
+      - discovery-service
+    networks:
+      - backend
+
   notification-service:
     build: ./microservices/notification-service
     container_name: notification-service
