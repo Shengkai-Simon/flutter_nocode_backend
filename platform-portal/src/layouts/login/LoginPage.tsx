@@ -9,7 +9,7 @@ import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
-import {PasswordInput} from "@/components/ui/PasswordInput";
+import {PasswordInput} from "@/components/PasswordInput.tsx";
 import {useAuthStore} from "@/stores/useAuthStore";
 import {api, ApiError} from "@/lib/api";
 import {navRoutes} from "@/lib/navRoutes.ts";

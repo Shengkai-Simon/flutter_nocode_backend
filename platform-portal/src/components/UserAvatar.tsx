@@ -1,5 +1,5 @@
 import * as React from "react";
-import {cn} from "@/lib/utils";
+import {cn} from "@/lib/utils.ts";
 
 interface UserAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
     email: string | undefined | null;

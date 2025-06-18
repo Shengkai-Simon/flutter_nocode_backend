@@ -17,7 +17,7 @@ import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip"
 import {api} from "@/lib/api.ts";
 import * as React from "react";
 import {navRoutes} from "@/lib/navRoutes.ts";
-import {UserAvatar} from "@/components/ui/UserAvatar.tsx";
+import {UserAvatar} from "@/components/UserAvatar.tsx";
 import {apiPaths} from "@/lib/apiPaths.ts";
 
 interface Item {

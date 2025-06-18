@@ -21,7 +21,7 @@ export default function AppRoutes() {
             {/* Protected navRoutes */}
             <Route element={<ProtectedRoute />}>
                 <Route path={navRoutes.dashboard} element={<DashboardLayout />} />
-                <Route path={navRoutes.editor} element={<EditorLayout />} />
+                <Route path={navRoutes.editorPath} element={<EditorLayout />} />
             </Route>
         </Routes>
     );
