@@ -14,6 +14,7 @@ import {apiPaths} from "@/lib/apiPaths";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {AuthFormCard} from "@/components/AuthFormCard.tsx";
+import {useTranslation} from "react-i18next";
 
 const formSchema = z.object({
     email: z.string().email({message: "Please enter a valid email address."}),
@@ -21,6 +22,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function ForgotPasswordPage() {
+    const {t} = useTranslation();
+    const lockedMsg = t('error.accountLockedReset');
     const navigate = useNavigate();
     const [isLockedAccountError, setIsLockedAccountError] = useState(false);
     const location = useLocation();
@@ -34,7 +37,7 @@ export default function ForgotPasswordPage() {
     const forgotPasswordMutation = useMutation({
         mutationFn: (values: FormValues) => api.post(apiPaths.forgotPassword, values),
         onError: (error) => {
-            if (error.message === "Cannot reset password for a locked account. Please unlock it first.") {
+            if (error.message === lockedMsg) {
                 setIsLockedAccountError(true);
             }
         },
@@ -62,16 +65,16 @@ export default function ForgotPasswordPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <CheckCircle2 className="size-12 text-green-500 w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">Check your email</CardTitle>
+                        <CardTitle className="text-2xl">{t('general.check.email')}</CardTitle>
                         <CardDescription>
-                            We've sent a password reset link to your email address.
+                            {t('forgotPassword.success.description')}
                         </CardDescription>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <Link to={navRoutes.login}>
                         <Button className="w-full" variant="outline">
-                            Back to Login
+                            {t('general.back.login')}
                         </Button>
                     </Link>
                 </CardContent>
@@ -79,15 +82,15 @@ export default function ForgotPasswordPage() {
         );
     }
 
-    const apiError = isLockedAccountError ? "Cannot reset password for a locked account. Please unlock it first." : forgotPasswordMutation.error?.message;
+    const apiError = isLockedAccountError ? lockedMsg : forgotPasswordMutation.error?.message;
 
     return (
         <Form {...form}>
             <AuthFormCard
-                title="Forgot Password"
-                description="Enter your email and we will send you a link to reset your password."
+                title={t('forgotPassword.form.title')}
+                description={t('forgotPassword.form.description')}
                 onSubmit={form.handleSubmit(onSubmit)}
-                submitText={isLockedAccountError ? "Unlock Account" : "Send Reset Link"}
+                submitText={isLockedAccountError ? t('general.unlock') : t('forgotPassword.form.submitText')}
                 submitButtonVariant={isLockedAccountError ? "destructive" : "default"}
                 isSubmitting={forgotPasswordMutation.isPending}
                 apiError={apiError}
@@ -95,7 +98,7 @@ export default function ForgotPasswordPage() {
                     <Link to={navRoutes.login} className="w-full">
                         <Button variant="outline" className="w-full" type="button"
                                 disabled={forgotPasswordMutation.isPending}>
-                            Back to Login
+                            {t('general.back.login')}
                         </Button>
                     </Link>
                 }
@@ -105,7 +108,7 @@ export default function ForgotPasswordPage() {
                     name="email"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t('forgotPassword.form.emailLabel')}</FormLabel>
                             <FormControl><Input type="email" {...field} /></FormControl>
                             <FormMessage/>
                         </FormItem>

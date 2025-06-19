@@ -89,9 +89,9 @@ export default function VerifyPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <CheckCircle2 className="size-12 text-green-500 w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">Verification Successful!</CardTitle>
+                        <CardTitle className="text-2xl">{t('verify.success.title')}</CardTitle>
                         <CardDescription>
-                            You can now log in with your new account. Redirecting...
+                            {t('verify.success.description')}
                         </CardDescription>
                     </div>
                 </CardHeader>

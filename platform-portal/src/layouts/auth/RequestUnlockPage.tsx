@@ -13,6 +13,7 @@ import {navRoutes} from "@/lib/navRoutes";
 import {apiPaths} from "@/lib/apiPaths";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {AuthFormCard} from "@/components/AuthFormCard.tsx";
+import {useTranslation} from "react-i18next";
 
 const formSchema = z.object({
     email: z.string().email({message: "Please enter a valid email address."}),
@@ -20,6 +21,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function RequestUnlockPage() {
+    const {t} = useTranslation();
     const location = useLocation();
     const email = location.state?.email;
 
@@ -42,17 +44,16 @@ export default function RequestUnlockPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <CheckCircle2 className="size-12 text-green-500 w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">Check your email</CardTitle>
+                        <CardTitle className="text-2xl">{t('general.check.email')}</CardTitle>
                         <CardDescription>
-                            We've sent an unlock link to {form.getValues("email")}. Please click the link to unlock your
-                            account.
+                            {t('requestUnlock.success.description', { email: form.getValues("email") })}
                         </CardDescription>
                     </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                     <Link to={navRoutes.login}>
                         <Button className="w-full" variant="outline">
-                            Back to Login
+                            {t('general.back.login')}
                         </Button>
                     </Link>
                 </CardContent>
@@ -63,17 +64,17 @@ export default function RequestUnlockPage() {
     return (
         <Form {...form}>
             <AuthFormCard
-                title="Unlock Account"
-                description="Enter your email to receive an account unlock token."
+                title={t('general.unlock')}
+                description={t('requestUnlock.form.description')}
                 onSubmit={form.handleSubmit(onSubmit)}
-                submitText="Send Unlock Token"
+                submitText={t('requestUnlock.form.submitText')}
                 isSubmitting={requestUnlockMutation.isPending}
                 apiError={requestUnlockMutation.error?.message}
                 footerContent={
                     <Link to={navRoutes.login} state={{email: form.getValues("email")}} className="w-full">
                         <Button variant="outline" className="w-full" type="button"
                                 disabled={requestUnlockMutation.isPending}>
-                            Back to Login
+                            {t('general.back.login')}
                         </Button>
                     </Link>
                 }
@@ -83,7 +84,7 @@ export default function RequestUnlockPage() {
                     name="email"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t('general.emailLabel')}</FormLabel>
                             <FormControl><Input type='email' {...field} /></FormControl>
                             <FormMessage/>
                         </FormItem>

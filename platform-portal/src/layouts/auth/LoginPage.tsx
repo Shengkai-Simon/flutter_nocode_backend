@@ -25,6 +25,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
     const {t} = useTranslation();
+    const lockedMsg = t('error.accountLocked');
     const navigate = useNavigate();
     const location = useLocation();
     const {login} = useAuthStore();
@@ -43,7 +44,7 @@ export default function LoginPage() {
             navigate(navRoutes.dashboard);
         },
         onError: (error) => {
-            if (error.message === "User account is locked.") {
+            if (error.message === lockedMsg) {
                 setIsAccountLocked(true);
             }
         },
@@ -67,7 +68,7 @@ export default function LoginPage() {
         loginMutation.mutate(values);
     };
 
-    const apiError = isAccountLocked ? "User account is locked." : loginMutation.error?.message;
+    const apiError = isAccountLocked ? lockedMsg : loginMutation.error?.message;
 
 
     return (
@@ -76,7 +77,7 @@ export default function LoginPage() {
                 title={t('login.title')}
                 description={t('login.description')}
                 onSubmit={form.handleSubmit(onSubmit)}
-                submitText={isAccountLocked ? "Unlock Account" : t('login.button')}
+                submitText={isAccountLocked ? t('login.unlockButton') : t('login.button')}
                 submitButtonVariant={isAccountLocked ? "destructive" : "default"}
                 isSubmitting={loginMutation.isPending}
                 apiError={apiError}
@@ -115,7 +116,7 @@ export default function LoginPage() {
                                     state={{email: watchedEmail}}
                                     className="ml-auto inline-block text-sm underline"
                                 >
-                                    Forgot your password?
+                                    {t('login.forgotPasswordLink')}
                                 </Link>
                             </div>
                             <FormControl><PasswordInput {...field} /></FormControl>

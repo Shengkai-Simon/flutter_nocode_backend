@@ -8,8 +8,10 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {api} from "@/lib/api";
 import {navRoutes} from "@/lib/navRoutes";
 import {apiPaths} from "@/lib/apiPaths";
+import {useTranslation} from "react-i18next";
 
 export default function PerformUnlockPage() {
+    const {t} = useTranslation();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
@@ -33,15 +35,15 @@ export default function PerformUnlockPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <XCircle className="size-12 text-destructive w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">Invalid Link</CardTitle>
+                        <CardTitle className="text-2xl">{t('general.invalidLink.title')}</CardTitle>
                         <CardDescription>
-                            The unlock link is missing a token. Please request a new one.
+                            {t('performUnlock.invalidLink.description')}
                         </CardDescription>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <Link to={navRoutes.requestUnlock}>
-                        <Button className="w-full" variant="outline">Request a New Link</Button>
+                        <Button className="w-full" variant="outline">{t('general.request.link')}</Button>
                     </Link>
                 </CardContent>
             </Card>
@@ -54,9 +56,9 @@ export default function PerformUnlockPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <Loader2 className="size-12 animate-spin text-muted-foreground" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">Unlocking Account...</CardTitle>
+                        <CardTitle className="text-2xl">{t('performUnlock.loading.title')}</CardTitle>
                         <CardDescription>
-                            Please wait while we verify your request.
+                            {t('performUnlock.loading.description')}
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -70,9 +72,9 @@ export default function PerformUnlockPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <CheckCircle2 className="size-12 text-green-500 w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">Account Unlocked!</CardTitle>
+                        <CardTitle className="text-2xl">{t('performUnlock.success.title')}</CardTitle>
                         <CardDescription>
-                            Your account has been successfully unlocked. Redirecting to login...
+                            {t('performUnlock.success.description')}
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -86,7 +88,7 @@ export default function PerformUnlockPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <XCircle className="size-12 text-destructive w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">Unlock Failed</CardTitle>
+                        <CardTitle className="text-2xl">{t('performUnlock.error.title')}</CardTitle>
                         <CardDescription>
                             {performUnlockMutation.error.message || "An unknown error occurred."}
                         </CardDescription>
@@ -94,7 +96,7 @@ export default function PerformUnlockPage() {
                 </CardHeader>
                 <CardContent>
                     <Link to={navRoutes.requestUnlock}>
-                        <Button className="w-full" variant="outline">Request a New Link</Button>
+                        <Button className="w-full" variant="outline">{t('general.request.link')}</Button>
                     </Link>
                 </CardContent>
             </Card>

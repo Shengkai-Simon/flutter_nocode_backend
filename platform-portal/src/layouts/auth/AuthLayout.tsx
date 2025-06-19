@@ -2,9 +2,11 @@ import {Outlet} from "react-router-dom";
 import {Code, Moon, Sun} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {useThemeStore} from "@/stores/useThemeStore";
+import {useTranslation} from "react-i18next";
 
 export default function AuthLayout() {
     const {toggle, theme} = useThemeStore();
+    const {t} = useTranslation();
 
     return (
         <div className="min-h-screen w-full lg:grid lg:grid-cols-2">
@@ -28,11 +30,11 @@ export default function AuthLayout() {
                 <div className="relative z-10">
                     <div className="flex items-center justify-center gap-2 text-2xl font-semibold text-foreground">
                         <Code className="h-7 w-7"/>
-                        <span>Flutter No-Code Platform</span>
+                        <span>{t('Flutter No-Code Platform')}</span>
                     </div>
                     {/* 3. Text color optimization */}
                     <p className="mt-4 text-slate-600 dark:text-muted-foreground">
-                        "Visual build, one-click deployment. Your next great app starts here. ”
+                        {t('general.desc')}
                     </p>
                 </div>
             </div>

@@ -14,6 +14,7 @@ import {apiPaths} from "@/lib/apiPaths";
 import {navRoutes} from "@/lib/navRoutes";
 import {AuthFormCard} from "@/components/AuthFormCard.tsx";
 import {passwordValidation} from "@/layouts/auth/validations.ts";
+import {useTranslation} from "react-i18next";
 
 const formSchema = z.object({
     newPassword: passwordValidation,
@@ -25,6 +26,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function ResetPasswordPage() {
+    const {t} = useTranslation();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get('token');
@@ -51,15 +53,15 @@ export default function ResetPasswordPage() {
         return (
             <Card className="w-full max-w-sm text-center">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-destructive">Invalid Link</CardTitle>
+                    <CardTitle className="text-2xl text-destructive">{t('general.invalidLink.title')}</CardTitle>
                     <CardDescription>
-                        No reset token provided. Please request a new password reset link.
+                        {t('resetPassword.invalidLink.description')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Link to={navRoutes.forgotPassword}>
                         <Button className="w-full" variant="outline">
-                            Request a new link
+                            {t('general.request.link')}
                         </Button>
                     </Link>
                 </CardContent>
@@ -73,9 +75,9 @@ export default function ResetPasswordPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <CheckCircle2 className="size-12 text-green-500 w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">Password Reset Successfully!</CardTitle>
+                        <CardTitle className="text-2xl">{t('resetPassword.success.title')}</CardTitle>
                         <CardDescription>
-                            You can now log in with your new password. Redirecting...
+                            {t('resetPassword.success.description')}
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -86,23 +88,23 @@ export default function ResetPasswordPage() {
     return (
         <Form {...form}>
             <AuthFormCard
-                title="Reset Password"
-                description="Enter your new password below. Make sure it's secure."
+                title={t('resetPassword.form.title')}
+                description={t('resetPassword.form.description')}
                 onSubmit={form.handleSubmit(onSubmit)}
-                submitText="Set New Password"
+                submitText={t('resetPassword.form.submitText')}
                 isSubmitting={resetPasswordMutation.isPending}
                 apiError={resetPasswordMutation.error?.message}
             >
                 <FormField control={form.control} name="newPassword" render={({field}) => (
                     <FormItem>
-                        <FormLabel>New Password</FormLabel>
+                        <FormLabel>{t('resetPassword.form.newPasswordLabel')}</FormLabel>
                         <FormControl><PasswordInput {...field} /></FormControl>
                         <FormMessage/>
                     </FormItem>
                 )}/>
                 <FormField control={form.control} name="confirmPassword" render={({field}) => (
                     <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormLabel>{t('resetPassword.form.confirmPasswordLabel')}</FormLabel>
                         <FormControl><PasswordInput {...field} /></FormControl>
                         <FormMessage/>
                     </FormItem>
