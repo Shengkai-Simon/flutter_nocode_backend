@@ -4,13 +4,14 @@ import {Button} from "@/components/ui/button";
 import {useThemeStore} from "@/stores/useThemeStore";
 
 export default function AuthLayout() {
-    const { toggle, theme } = useThemeStore();
+    const {toggle, theme} = useThemeStore();
 
     return (
         <div className="min-h-screen w-full lg:grid lg:grid-cols-2">
 
-           {/* Left Brand Banner - Optimized for Light/Dark Mode */}
-            <div className="hidden lg:flex flex-col items-center justify-center bg-muted p-8 text-center relative overflow-hidden">
+            {/* Left Brand Banner - Optimized for Light/Dark Mode */}
+            <div
+                className="hidden lg:flex flex-col items-center justify-center bg-muted p-8 text-center relative overflow-hidden">
                 {/* 1. Background Gradient Optimization */}
                 <div
                     className="absolute inset-0 z-0 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-background dark:via-muted dark:to-background"
@@ -36,14 +37,14 @@ export default function AuthLayout() {
                 </div>
             </div>
 
-          {/* Right form area (unchanged) */}
+            {/* Right form area (unchanged) */}
             <div className="flex items-center justify-center p-4">
                 <div className="absolute top-4 right-4 z-20">
                     <Button onClick={toggle} size="icon" variant="ghost" aria-label="Toggle theme">
-                        {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                        {theme === "dark" ? <Sun className="h-5 w-5"/> : <Moon className="h-5 w-5"/>}
                     </Button>
                 </div>
-                <Outlet />
+                <Outlet/>
             </div>
         </div>
     );

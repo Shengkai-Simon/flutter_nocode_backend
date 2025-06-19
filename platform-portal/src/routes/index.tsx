@@ -3,10 +3,14 @@ import DashboardLayout from "@/layouts/dashboard/Dashboard.tsx";
 import EditorLayout from "@/layouts/editor/Editor.tsx";
 import {navRoutes} from "@/lib/navRoutes.ts";
 import AuthLayout from "@/layouts/auth/AuthLayout.tsx";
-import LoginPage from "@/layouts/login/LoginPage.tsx";
-import RegisterPage from "@/layouts/register/RegisterPage.tsx";
+import LoginPage from "@/layouts/auth/LoginPage.tsx";
+import RegisterPage from "@/layouts/auth/RegisterPage.tsx";
 import ProtectedRoute from "@/routes/ProtectedRoute.tsx";
-import VerifyPage from "@/layouts/verify/VerifyPage.tsx";
+import VerifyPage from "@/layouts/auth/VerifyPage.tsx";
+import ForgotPasswordPage from "@/layouts/auth/ForgotPasswordPage.tsx";
+import ResetPasswordPage from "@/layouts/auth/ResetPasswordPage.tsx";
+import RequestUnlockPage from "@/layouts/auth/RequestUnlockPage.tsx";
+import PerformUnlockPage from "@/layouts/auth/PerformUnlockPage.tsx";
 
 export default function AppRoutes() {
     return (
@@ -16,6 +20,10 @@ export default function AppRoutes() {
                 <Route path={navRoutes.login} element={<LoginPage />} />
                 <Route path={navRoutes.register} element={<RegisterPage />} />
                 <Route path={navRoutes.verify} element={<VerifyPage />} />
+                <Route path={navRoutes.forgotPassword} element={<ForgotPasswordPage />} />
+                <Route path={navRoutes.resetPassword} element={<ResetPasswordPage />} />
+                <Route path={navRoutes.requestUnlock} element={<RequestUnlockPage />} />
+                <Route path={navRoutes.performUnlock} element={<PerformUnlockPage />} />
             </Route>
 
             {/* Protected navRoutes */}

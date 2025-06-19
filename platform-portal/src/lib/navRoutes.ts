@@ -5,4 +5,8 @@ export const navRoutes = {
     login: "/login",
     register: "/register",
     verify: "/verify",
+    forgotPassword: "/forgot-password",
+    resetPassword: "/reset-password",
+    requestUnlock: "/request-unlock",
+    performUnlock: "/perform-unlock",
 }
