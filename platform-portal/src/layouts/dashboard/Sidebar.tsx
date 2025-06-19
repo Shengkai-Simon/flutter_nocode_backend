@@ -1,4 +1,6 @@
 import {LayoutList, LogOut, type LucideIcon, Sparkles} from "lucide-react";
+import {useMutation} from "@tanstack/react-query";
+import {useNavigate} from "react-router-dom";
 import {
     Sidebar,
     SidebarContent,
@@ -12,7 +14,6 @@ import {Card, CardDescription, CardTitle} from "@/components/ui/card";
 import {cn} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
 import {useAuthStore} from "@/stores/useAuthStore";
-import {useNavigate} from "react-router-dom";
 import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip";
 import {api} from "@/lib/api.ts";
 import * as React from "react";
@@ -28,21 +29,23 @@ interface Item {
 }
 
 const items: Item[] = [
-    { title: "Project", url: "#", icon: LayoutList, isActive: true },
-    { title: "Ask AI", url: "#", icon: Sparkles }
+    {title: "Project", url: "#", icon: LayoutList, isActive: true},
+    {title: "Ask AI", url: "#", icon: Sparkles}
 ];
 
-export default function DashboardSidebar({ className, ...props }: React.ComponentProps<"div">) {
-    // --- Get both the logout method and the token from the store ---
-    const { logout, user } = useAuthStore();
+export default function DashboardSidebar({className, ...props}: React.ComponentProps<"div">) {
+    const {logout, user} = useAuthStore();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        api.post(apiPaths.logout, {})
-            .catch(error => {
-                console.error("Background logout API call failed:", error);
-            });
+    const logoutMutation = useMutation({
+        mutationFn: () => api.post(apiPaths.logout, {}),
+        onError: (error) => {
+            console.error("Backend logout API call failed:", error);
+        }
+    });
 
+    const handleLogout = () => {
+        logoutMutation.mutate();
         logout();
         navigate(navRoutes.login);
     };
@@ -57,7 +60,7 @@ export default function DashboardSidebar({ className, ...props }: React.Componen
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton asChild isActive={item.isActive}>
                                 <a href={item.url}>
-                                    <item.icon />
+                                    <item.icon/>
                                     <span>{item.title}</span>
                                 </a>
                             </SidebarMenuButton>
@@ -69,14 +72,17 @@ export default function DashboardSidebar({ className, ...props }: React.Componen
             <SidebarFooter className="p-3">
                 <Card className="px-3 gap-2">
                     <div className="flex items-center justify-between">
-                       {/* Left: Avatar and text */}
                         <div className="flex items-center gap-3">
-                            <UserAvatar email={user?.email} />
+                            <UserAvatar email={user?.email}/>
                         </div>
-                        {/* Right: Logout icon button with a hint */}
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-full" onClick={handleLogout}>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full"
+                                    onClick={handleLogout}
+                                >
                                     <LogOut className="h-4 w-4"/>
                                 </Button>
                             </TooltipTrigger>
@@ -88,7 +94,6 @@ export default function DashboardSidebar({ className, ...props }: React.Componen
                     <CardTitle className="text-sm">{user?.email || "Loading..."}</CardTitle>
                     <CardDescription>Welcome to platform</CardDescription>
                 </Card>
-
             </SidebarFooter>
         </Sidebar>
     )
