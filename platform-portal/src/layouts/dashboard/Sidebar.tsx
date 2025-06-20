@@ -39,6 +39,11 @@ export default function DashboardSidebar({className, ...props}: React.ComponentP
 
     const logoutMutation = useMutation({
         mutationFn: () => api.post(apiPaths.logout, {}),
+        onSettled: () => {
+            logout();
+            navigate(navRoutes.login);
+            console.log("Frontend logout completed.");
+        },
         onError: (error) => {
             console.error("Backend logout API call failed:", error);
         }
@@ -46,8 +51,6 @@ export default function DashboardSidebar({className, ...props}: React.ComponentP
 
     const handleLogout = () => {
         logoutMutation.mutate();
-        logout();
-        navigate(navRoutes.login);
     };
 
     return (
