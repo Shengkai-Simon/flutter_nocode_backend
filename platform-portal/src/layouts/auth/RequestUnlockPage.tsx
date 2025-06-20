@@ -44,7 +44,7 @@ export default function RequestUnlockPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <CheckCircle2 className="size-12 text-green-500 w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">{t('general.check.email')}</CardTitle>
+                        <CardTitle className="text-2xl">{t('requestUnlock.success.title')}</CardTitle>
                         <CardDescription>
                             {t('requestUnlock.success.description', { email: form.getValues("email") })}
                         </CardDescription>
@@ -53,7 +53,7 @@ export default function RequestUnlockPage() {
                 <CardContent className="flex flex-col gap-4">
                     <Link to={navRoutes.login}>
                         <Button className="w-full" variant="outline">
-                            {t('general.back.login')}
+                            {t('requestUnlock.form.backToLogin')}
                         </Button>
                     </Link>
                 </CardContent>
@@ -64,7 +64,7 @@ export default function RequestUnlockPage() {
     return (
         <Form {...form}>
             <AuthFormCard
-                title={t('general.unlock')}
+                title={t('requestUnlock.form.title')}
                 description={t('requestUnlock.form.description')}
                 onSubmit={form.handleSubmit(onSubmit)}
                 submitText={t('requestUnlock.form.submitText')}
@@ -74,7 +74,7 @@ export default function RequestUnlockPage() {
                     <Link to={navRoutes.login} state={{email: form.getValues("email")}} className="w-full">
                         <Button variant="outline" className="w-full" type="button"
                                 disabled={requestUnlockMutation.isPending}>
-                            {t('general.back.login')}
+                            {t('requestUnlock.form.backToLogin')}
                         </Button>
                     </Link>
                 }
@@ -84,7 +84,7 @@ export default function RequestUnlockPage() {
                     name="email"
                     render={({field}) => (
                         <FormItem>
-                            <FormLabel>{t('general.emailLabel')}</FormLabel>
+                            <FormLabel>{t('requestUnlock.form.emailLabel')}</FormLabel>
                             <FormControl><Input type='email' {...field} /></FormControl>
                             <FormMessage/>
                         </FormItem>

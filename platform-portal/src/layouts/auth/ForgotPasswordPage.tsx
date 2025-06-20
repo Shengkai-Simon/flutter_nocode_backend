@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <CheckCircle2 className="size-12 text-green-500 w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">{t('general.check.email')}</CardTitle>
+                        <CardTitle className="text-2xl">{t('forgotPassword.success.title')}</CardTitle>
                         <CardDescription>
                             {t('forgotPassword.success.description')}
                         </CardDescription>
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
                 <CardContent>
                     <Link to={navRoutes.login}>
                         <Button className="w-full" variant="outline">
-                            {t('general.back.login')}
+                            {t('forgotPassword.form.backToLogin')}
                         </Button>
                     </Link>
                 </CardContent>
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
                 title={t('forgotPassword.form.title')}
                 description={t('forgotPassword.form.description')}
                 onSubmit={form.handleSubmit(onSubmit)}
-                submitText={isLockedAccountError ? t('general.unlock') : t('forgotPassword.form.submitText')}
+                submitText={isLockedAccountError ? t('forgotPassword.unlockButton') : t('forgotPassword.form.submitText')}
                 submitButtonVariant={isLockedAccountError ? "destructive" : "default"}
                 isSubmitting={forgotPasswordMutation.isPending}
                 apiError={apiError}
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
                     <Link to={navRoutes.login} className="w-full">
                         <Button variant="outline" className="w-full" type="button"
                                 disabled={forgotPasswordMutation.isPending}>
-                            {t('general.back.login')}
+                            {t('forgotPassword.form.backToLogin')}
                         </Button>
                     </Link>
                 }

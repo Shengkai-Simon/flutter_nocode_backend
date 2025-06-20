@@ -30,7 +30,7 @@ export default function AuthLayout() {
                 <div className="relative z-10">
                     <div className="flex items-center justify-center gap-2 text-2xl font-semibold text-foreground">
                         <Code className="h-7 w-7"/>
-                        <span>{t('Flutter No-Code Platform')}</span>
+                        <span>{t('general.name')}</span>
                     </div>
                     {/* 3. Text color optimization */}
                     <p className="mt-4 text-slate-600 dark:text-muted-foreground">

@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
         return (
             <Card className="w-full max-w-sm text-center">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-destructive">{t('general.invalidLink.title')}</CardTitle>
+                    <CardTitle className="text-2xl text-destructive">{t('resetPassword.invalidLink.title')}</CardTitle>
                     <CardDescription>
                         {t('resetPassword.invalidLink.description')}
                     </CardDescription>
@@ -61,7 +61,7 @@ export default function ResetPasswordPage() {
                 <CardContent>
                     <Link to={navRoutes.forgotPassword}>
                         <Button className="w-full" variant="outline">
-                            {t('general.request.link')}
+                            {t('resetPassword.invalidLink.button')}
                         </Button>
                     </Link>
                 </CardContent>

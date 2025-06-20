@@ -35,7 +35,7 @@ export default function PerformUnlockPage() {
                 <CardHeader className="items-center gap-4 p-6">
                     <XCircle className="size-12 text-destructive w-full" aria-hidden="true"/>
                     <div className="space-y-1.5">
-                        <CardTitle className="text-2xl">{t('general.invalidLink.title')}</CardTitle>
+                        <CardTitle className="text-2xl">{t('performUnlock.invalidLink.title')}</CardTitle>
                         <CardDescription>
                             {t('performUnlock.invalidLink.description')}
                         </CardDescription>
@@ -43,7 +43,7 @@ export default function PerformUnlockPage() {
                 </CardHeader>
                 <CardContent>
                     <Link to={navRoutes.requestUnlock}>
-                        <Button className="w-full" variant="outline">{t('general.request.link')}</Button>
+                        <Button className="w-full" variant="outline">{t('performUnlock.error.button')}</Button>
                     </Link>
                 </CardContent>
             </Card>
@@ -96,7 +96,7 @@ export default function PerformUnlockPage() {
                 </CardHeader>
                 <CardContent>
                     <Link to={navRoutes.requestUnlock}>
-                        <Button className="w-full" variant="outline">{t('general.request.link')}</Button>
+                        <Button className="w-full" variant="outline">{t('performUnlock.error.button')}</Button>
                     </Link>
                 </CardContent>
             </Card>
