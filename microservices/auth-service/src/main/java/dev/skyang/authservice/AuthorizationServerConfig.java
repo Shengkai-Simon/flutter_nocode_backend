@@ -7,7 +7,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import dev.skyang.authservice.config.ApiPaths;
 import dev.skyang.authservice.jose.Jwks;
-import dev.skyang.authservice.service.CustomUserDetailsService;
+import dev.skyang.authservice.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

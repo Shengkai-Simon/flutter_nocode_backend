@@ -1,11 +1,11 @@
-package dev.skyang.authservice.service;
+package dev.skyang.authservice.security;
 
 import dev.skyang.authservice.dto.UserAuthDetails;
+import dev.skyang.authservice.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -45,7 +45,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .collect(Collectors.toList());
 
             // Use the information you get to create a UserDetails object for Spring Security
-            return new User(
+            return new CustomUserDetails(
+                    userAuthDetails.getId(),
                     userAuthDetails.getEmail(),
                     userAuthDetails.getPassword(),
                     userAuthDetails.isEnabled(),

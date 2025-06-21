@@ -1,5 +1,6 @@
 package dev.skyang.authservice.service;
 
+import dev.skyang.authservice.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -27,6 +28,9 @@ public class TokenService {
         Instant now = Instant.now();
         long expiry = 3600L; // 1 hour
 
+        CustomUserDetails userPrincipal = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userPrincipal.getId();
+
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
@@ -37,6 +41,7 @@ public class TokenService {
                 .expiresAt(now.plusSeconds(expiry))
                 .subject(authentication.getName())
                 .claim("scope", scope)
+                .claim("uid", userId)
                 .claim("authorities", authentication.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList()))
