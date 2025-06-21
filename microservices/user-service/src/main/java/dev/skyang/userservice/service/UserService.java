@@ -28,15 +28,24 @@ public class UserService {
 
     // --- Redis Key Prefixes and TTLs ---
     private static final String VERIFICATION_CODE_PREFIX = "verification:code:";
-    private static final String VERIFICATION_COOLDOWN_PREFIX = "verification:cooldown:";
-    private static final String LOGIN_ATTEMPT_PREFIX = "login:attempt:"; // Login failure count
+    private static final String LOGIN_ATTEMPT_PREFIX = "login:attempt:";
     private static final String UNLOCK_TOKEN_PREFIX = "unlock:token:";
     private static final String PASSWORD_RESET_TOKEN_PREFIX = "reset-password:token:";
+    // Reverse mapping prefixes
+    private static final String USER_TO_UNLOCK_TOKEN_PREFIX = "user:unlock-token:";
+    private static final String USER_TO_PASSWORD_RESET_TOKEN_PREFIX = "user:password-reset-token:";
+
+    // --- Cooldown Key Prefixes and TTL ---
+    private static final String COOLDOWN_REGISTER_PREFIX = "cooldown:register:";
+    private static final String COOLDOWN_RESEND_VERIFICATION_PREFIX = "cooldown:resend-verification:";
+    private static final String COOLDOWN_UNLOCK_PREFIX = "cooldown:unlock:";
+    private static final String COOLDOWN_PASSWORD_RESET_PREFIX = "cooldown:password-reset:";
+    private static final long EMAIL_COOLDOWN_SECONDS = 60; // 60-second cooldown for all email operations
 
     private static final long VERIFICATION_CODE_TTL_MINUTES = 5;
-    private static final long VERIFICATION_COOLDOWN_SECONDS = 60; // Cooldown: 1 minute
-    private static final long UNLOCK_TOKEN_TTL_MINUTES = 15; // The unlock token is valid for 15 minutes
-    private static final long PASSWORD_RESET_TOKEN_TTL_MINUTES = 15; // The reset token is valid for 15 minutes
+    private static final long UNLOCK_TOKEN_TTL_MINUTES = 15;
+    private static final long PASSWORD_RESET_TOKEN_TTL_MINUTES = 15;
+
 
     // --- RabbitMQ Constants ---
     public static final String NOTIFICATION_EXCHANGE = "notification.exchange";
@@ -59,10 +68,32 @@ public class UserService {
     private RabbitTemplate rabbitTemplate;
 
     /**
+     * Checks if an operation for a given email is on cooldown.
+     * Throws an exception if it is.
+     */
+    private void checkCooldown(String email, String prefix, String errorMessage) {
+        String cooldownKey = prefix + email;
+        if (redisTemplate.hasKey(cooldownKey)) {
+            throw new IllegalStateException(errorMessage);
+        }
+    }
+
+    /**
+     * Sets the cooldown for an operation for a given email.
+     */
+    private void setCooldown(String email, String prefix) {
+        String cooldownKey = prefix + email;
+        redisTemplate.opsForValue().set(cooldownKey, "1", EMAIL_COOLDOWN_SECONDS, TimeUnit.SECONDS);
+    }
+
+
+    /**
      * Registers a new user or re-initiates verification for an existing unverified user.
      */
     @Transactional
     public void register(RegistrationRequest request) {
+        checkCooldown(request.getEmail(), COOLDOWN_REGISTER_PREFIX, "Please wait a moment before trying to register again.");
+
         Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
 
         if (existingUserOpt.isPresent()) {
@@ -107,6 +138,9 @@ public class UserService {
             // 3. Send a verification code. The transaction is committed at the end of the method and the new role relationship is automatically written to the database.
             sendVerificationCode(savedUser.getEmail());
         }
+
+        // Set cooldown only after all checks passed and email is sent
+        setCooldown(request.getEmail(), COOLDOWN_REGISTER_PREFIX);
     }
 
     /**
@@ -114,13 +148,8 @@ public class UserService {
      * @param email The user's email.
      */
     public void resendVerificationCode(String email) {
-        // 1. Check for the cooldown timer
-        String cooldownKey = VERIFICATION_COOLDOWN_PREFIX + email;
-        if (redisTemplate.hasKey(cooldownKey)) {
-            throw new IllegalStateException("Please wait before requesting a new code.");
-        }
+        checkCooldown(email, COOLDOWN_RESEND_VERIFICATION_PREFIX, "Please wait before requesting a new code.");
 
-        // 2. Find user and check their status
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found."));
 
@@ -128,31 +157,26 @@ public class UserService {
             throw new IllegalStateException("Account is already active.");
         }
 
-        // 3. Send the new verification code (this method now contains the Saga logic)
         sendVerificationCode(email);
+
+        // Set cooldown only after all checks passed and email is sent
+        setCooldown(email, COOLDOWN_RESEND_VERIFICATION_PREFIX);
     }
 
     /**
-     * Core method: Generates, stores, and dispatches the verification code,
-     * and sets the cooldown timer. This is a critical system operation.
+     * Core method: Generates, stores, and dispatches the verification code.
      * @param email The target email address.
      */
     private void sendVerificationCode(String email) {
         String code = generateVerificationCode();
         String redisKey = VERIFICATION_CODE_PREFIX + email;
-        String cooldownKey = VERIFICATION_COOLDOWN_PREFIX + email;
 
         try {
-            // Step 1: Store verification code in Redis
             redisTemplate.opsForValue().set(redisKey, code, VERIFICATION_CODE_TTL_MINUTES, TimeUnit.MINUTES);
 
-            // Step 2: Send message to RabbitMQ for email dispatch
             String emailBody = "Welcome! Your verification code is: " + code;
             NotificationMessage message = new NotificationMessage(email, "Verify Your Account", emailBody);
             rabbitTemplate.convertAndSend(NOTIFICATION_EXCHANGE, EMAIL_ROUTING_KEY, message);
-
-            // Step 3: Set the cooldown timer in Redis
-            redisTemplate.opsForValue().set(cooldownKey, "1", VERIFICATION_COOLDOWN_SECONDS, TimeUnit.SECONDS);
 
         } catch (Exception e) {
             // If any of these critical steps fail, we must log it and inform the user.
@@ -229,6 +253,7 @@ public class UserService {
                 .collect(Collectors.toSet());
 
         return new UserDetailsResponse(
+                user.getId(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getStatus().name(),
@@ -256,6 +281,8 @@ public class UserService {
      * @param email The email of the locked account.
      */
     public void requestAccountUnlock(String email) {
+        checkCooldown(email, COOLDOWN_UNLOCK_PREFIX, "Please wait a moment before requesting another account unlock email.");
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found."));
 
@@ -263,19 +290,29 @@ public class UserService {
             throw new IllegalStateException("Account is not locked.");
         }
 
-        // Generate a unique, one-time unlock token
+        // Invalidate old unlock token if exists
+        String userToTokenKey = USER_TO_UNLOCK_TOKEN_PREFIX + email;
+        String oldToken = redisTemplate.opsForValue().get(userToTokenKey);
+        if (oldToken != null) {
+            redisTemplate.delete(UNLOCK_TOKEN_PREFIX + oldToken);
+            log.info("Invalidated old unlock token for user: {}", email);
+        }
+
         String token = UUID.randomUUID().toString();
         String redisKey = UNLOCK_TOKEN_PREFIX + token;
 
-        // Deposit the token into Redis and set the expiration date
+        // Store primary and reverse mappings
         redisTemplate.opsForValue().set(redisKey, email, UNLOCK_TOKEN_TTL_MINUTES, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(userToTokenKey, token, UNLOCK_TOKEN_TTL_MINUTES, TimeUnit.MINUTES);
 
-        // Send a notification email (here we reuse the NotificationMessage and RabbitMQ channels)
-        String emailBody = "An account unlock was requested for your account. Click the link below to unlock it. This link is valid for 15 minutes.\n\n"
+        String emailBody = "An account unlock was requested for your account. This link is valid for 15 minutes.\n\n"
                 + "Unlock Token: " + token + "\n\n"
                 + "If you did not request this, please ignore this email.";
         NotificationMessage message = new NotificationMessage(email, "Account Unlock Request", emailBody);
         rabbitTemplate.convertAndSend(NOTIFICATION_EXCHANGE, EMAIL_ROUTING_KEY, message);
+
+        // Set cooldown only after all checks passed and email is sent
+        setCooldown(email, COOLDOWN_UNLOCK_PREFIX);
 
         log.info("Unlock token sent for locked account: {}", email);
     }
@@ -302,9 +339,10 @@ public class UserService {
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
 
-        // Clean up login failure counts and used unlock tokens
+        // Clean up all related tokens and attempts
         redisTemplate.delete(LOGIN_ATTEMPT_PREFIX + email);
         redisTemplate.delete(redisKey);
+        redisTemplate.delete(USER_TO_UNLOCK_TOKEN_PREFIX + email); // <-- Clean up reverse mapping
 
         log.info("Account for user {} has been successfully unlocked.", email);
     }
@@ -314,7 +352,8 @@ public class UserService {
      * @param email The user's email.
      */
     public void forgotPassword(String email) {
-        // We only send reset emails to pre-existing, non-locked users
+        checkCooldown(email, COOLDOWN_PASSWORD_RESET_PREFIX, "Please wait a moment before requesting another password reset email.");
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found."));
 
@@ -322,16 +361,29 @@ public class UserService {
             throw new IllegalStateException("Cannot reset password for a locked account. Please unlock it first.");
         }
 
+        // Invalidate old password reset token if exists
+        String userToTokenKey = USER_TO_PASSWORD_RESET_TOKEN_PREFIX + email;
+        String oldToken = redisTemplate.opsForValue().get(userToTokenKey);
+        if (oldToken != null) {
+            redisTemplate.delete(PASSWORD_RESET_TOKEN_PREFIX + oldToken);
+            log.info("Invalidated old password reset token for user: {}", email);
+        }
+
         String token = UUID.randomUUID().toString();
         String redisKey = PASSWORD_RESET_TOKEN_PREFIX + token;
 
+        // Store primary and reverse mappings
         redisTemplate.opsForValue().set(redisKey, email, PASSWORD_RESET_TOKEN_TTL_MINUTES, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(userToTokenKey, token, PASSWORD_RESET_TOKEN_TTL_MINUTES, TimeUnit.MINUTES);
 
-        String emailBody = "A password reset was requested for your account. Click the link below to reset it. This link is valid for 15 minutes.\n\n"
+        String emailBody = "A password reset was requested for your account. This link is valid for 15 minutes.\n\n"
                 + "Reset Token: " + token + "\n\n"
                 + "If you did not request this, please ignore this email.";
         NotificationMessage message = new NotificationMessage(email, "Password Reset Request", emailBody);
         rabbitTemplate.convertAndSend(NOTIFICATION_EXCHANGE, EMAIL_ROUTING_KEY, message);
+
+        // Set cooldown only after all checks passed and email is sent
+        setCooldown(email, COOLDOWN_PASSWORD_RESET_PREFIX);
 
         log.info("Password reset token sent for user: {}", email);
     }
@@ -356,8 +408,9 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // Clean up the reset tokens that have been used
+        // Clean up all related tokens
         redisTemplate.delete(redisKey);
+        redisTemplate.delete(USER_TO_PASSWORD_RESET_TOKEN_PREFIX + email); // <-- Clean up reverse mapping
 
         log.info("Password for user {} has been successfully reset.", email);
     }
