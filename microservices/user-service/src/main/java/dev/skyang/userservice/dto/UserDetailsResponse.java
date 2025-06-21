@@ -7,6 +7,7 @@ import java.util.Set;
  */
 public class UserDetailsResponse {
 
+    private Long id;
     private String email;
     private String password; // The hashed password
     private String status;   // e.g., "ACTIVE", "PENDING_VERIFICATION"
@@ -16,7 +17,8 @@ public class UserDetailsResponse {
     private boolean credentialsNonExpired;
     private boolean accountNonExpired;
 
-    public UserDetailsResponse(String email, String password, String status, Set<String> roles) {
+    public UserDetailsResponse(Long id, String email, String password, String status, Set<String> roles) {
+        this.id = id;
         this.email = email;
         this.password = password;
         this.status = status;
@@ -28,6 +30,8 @@ public class UserDetailsResponse {
     }
 
     // Getters and Setters
+    public Long getId() {return id;}
+    public void setId(Long id) {this.id = id;}
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getPassword() { return password; }
