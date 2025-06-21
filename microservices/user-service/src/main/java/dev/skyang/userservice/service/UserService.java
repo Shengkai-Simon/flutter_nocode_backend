@@ -253,6 +253,7 @@ public class UserService {
                 .collect(Collectors.toSet());
 
         return new UserDetailsResponse(
+                user.getId(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getStatus().name(),

@@ -1,6 +1,7 @@
 package dev.skyang.authservice.service;
 
 import dev.skyang.authservice.dto.UserAuthDetails;
+import dev.skyang.authservice.security.CustomUserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
