@@ -28,6 +28,7 @@ export default function RequestUnlockPage() {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {email: email || ""},
+        mode: "onChange"
     });
 
     const requestUnlockMutation = useMutation({
@@ -46,7 +47,7 @@ export default function RequestUnlockPage() {
                     <div className="space-y-1.5">
                         <CardTitle className="text-2xl">{t('requestUnlock.success.title')}</CardTitle>
                         <CardDescription>
-                            {t('requestUnlock.success.description', { email: form.getValues("email") })}
+                            {t('requestUnlock.success.description', {email: form.getValues("email")})}
                         </CardDescription>
                     </div>
                 </CardHeader>

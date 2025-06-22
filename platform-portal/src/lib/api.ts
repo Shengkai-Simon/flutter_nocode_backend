@@ -15,12 +15,17 @@ export class ApiError extends Error {
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     const { token } = useAuthStore.getState();
     const defaultHeaders: HeadersInit = { 'Content-Type': 'application/json' };
+
     if (token && !url.includes('/public/')) {
         defaultHeaders['Authorization'] = `Bearer ${token}`;
     }
     options.headers = { ...defaultHeaders, ...options.headers };
 
     const response = await fetch(url, options);
+
+    if (response.status === 204) {
+        return {} as T; // An empty object is returned because there is no response body
+    }
 
     let responseData;
     try {
@@ -32,6 +37,15 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
             response.status
         );
     }
+
+    // **At the time of token invalidation**
+    // If the response code is 401 and the message clearly states that the token is invalid, log out
+    if (responseData?.code === 401 && responseData?.message === "Authentication token is invalid or has expired.") {
+        // Call the logout method in the Zustand store
+        useAuthStore.getState().logout();
+        // ProtectedRoute listens for changes in the isAuthenticated status and automatically redirects to the login page
+    }
+
 
     if (responseData && responseData.code === 200) {
         return responseData.data as T;
@@ -48,5 +62,6 @@ export const api = {
     get: <T>(url: string, options?: RequestInit) => request<T>(url, { ...options, method: 'GET' }),
     post: <T>(url:string, body: any, options?: RequestInit) => request<T>(url, { ...options, method: 'POST', body: JSON.stringify(body) }),
     put: <T>(url: string, body: any, options?: RequestInit) => request<T>(url, { ...options, method: 'PUT', body: JSON.stringify(body) }),
+    patch: <T>(url: string, body: any, options?: RequestInit) => request<T>(url, { ...options, method: 'PATCH', body: JSON.stringify(body), headers: {'Content-Type': 'application/json-patch+json'} }),
     delete: <T>(url: string, options?: RequestInit) => request<T>(url, { ...options, method: 'DELETE' }),
 };

@@ -34,6 +34,7 @@ export default function ResetPasswordPage() {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {newPassword: "", confirmPassword: ""},
+        mode: "onChange"
     });
 
     const resetPasswordMutation = useMutation({

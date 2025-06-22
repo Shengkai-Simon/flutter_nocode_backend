@@ -13,5 +13,8 @@ export const apiPaths = {
 
     me: '/api/users/me',
 
-    createProject: '/api/project/create-project',
+    createProject: '/api/projects',
+    getAllProjects: '/api/projects',
+    deleteProject: (projectId: number) => `/api/projects/${projectId}`,
+    updateProject: (projectId: number) => `/api/projects/${projectId}`,
 }

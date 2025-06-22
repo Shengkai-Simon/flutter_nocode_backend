@@ -32,6 +32,7 @@ export default function ForgotPasswordPage() {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {email: email},
+        mode: "onChange"
     });
 
     const forgotPasswordMutation = useMutation({

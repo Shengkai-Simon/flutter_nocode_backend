@@ -33,6 +33,7 @@ export default function VerifyPage() {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {code: ""},
+        mode: "onChange",
     });
 
     // 1. Used to process the submission of verification codes
