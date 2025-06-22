@@ -6,7 +6,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import dev.skyang.authservice.config.ApiPaths;
-import dev.skyang.authservice.jose.Jwks;
+import dev.skyang.authservice.config.RsaKeyProperties;
 import dev.skyang.authservice.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +35,12 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.UUID;
 
 @Configuration
@@ -43,30 +49,16 @@ public class AuthorizationServerConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-                OAuth2AuthorizationServerConfigurer.authorizationServer().oidc(Customizer.withDefaults());
+        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer.authorizationServer().oidc(Customizer.withDefaults());
 
-        http
-                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-                .with(authorizationServerConfigurer, Customizer.withDefaults())
-                .authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")))
-                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
+        http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher()).with(authorizationServerConfigurer, Customizer.withDefaults()).authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated()).exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))).oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
         return http.build();
     }
 
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(ApiPaths.PUBLIC_BASE + ApiPaths.LOGIN).permitAll()
-                        .requestMatchers(ApiPaths.API_BASE + ApiPaths.LOGOUT).authenticated()
-                        .anyRequest().authenticated()
-                )
-                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(authorize -> authorize.requestMatchers(ApiPaths.PUBLIC_BASE + ApiPaths.LOGIN).permitAll().requestMatchers(ApiPaths.API_BASE + ApiPaths.LOGOUT).authenticated().anyRequest().authenticated()).oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults())).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
 
@@ -85,28 +77,32 @@ public class AuthorizationServerConfig {
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("apptmate-client")
-                .clientSecret("{noop}secret")
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .redirectUri("http://127.0.0.1:8080/login/oauth2/code/apptmate-client-oidc")
-                .scope(OidcScopes.OPENID)
-                .scope(OidcScopes.PROFILE)
-                .scope("read")
-                .scope("write")
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-                .build();
+        RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString()).clientId("apptmate-client").clientSecret("{noop}secret").clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC).authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE).authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN).authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS).redirectUri("http://127.0.0.1:8080/login/oauth2/code/apptmate-client-oidc").scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE).scope("read").scope("write").clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build()).build();
         return new InMemoryRegisteredClientRepository(oidcClient);
     }
 
     @Bean
-    public JWKSource<SecurityContext> jwkSource() {
-        RSAKey rsaKey = Jwks.generateRsa();
+    public JWKSource<SecurityContext> jwkSource(RsaKeyProperties props) throws Exception {
+        RSAPublicKey publicKey = parsePublicKey(props.getPublicKey());
+        RSAPrivateKey privateKey = parsePrivateKey(props.getPrivateKey());
+        RSAKey rsaKey = new RSAKey.Builder(publicKey)
+                .privateKey(privateKey)
+                .keyID("stable-rsa-key-id-2025")
+                .build();
         JWKSet jwkSet = new JWKSet(rsaKey);
         return new ImmutableJWKSet<>(jwkSet);
+    }
+
+    private RSAPrivateKey parsePrivateKey(String key) throws Exception {
+        byte[] encoded = Base64.getDecoder().decode(key);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
+        return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+    }
+
+    private RSAPublicKey parsePublicKey(String key) throws Exception {
+        byte[] encoded = Base64.getDecoder().decode(key);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
+        return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);
     }
 
     @Bean
@@ -120,10 +116,7 @@ public class AuthorizationServerConfig {
      * It ensures that the configuration property values have been fully resolved when the bean is created.
      */
     @Bean
-    public AuthorizationServerSettings authorizationServerSettings(
-            @Value("${spring.security.oauth2.authorizationserver.issuer}") String issuerUri) {
-        return AuthorizationServerSettings.builder()
-                .issuer(issuerUri)
-                .build();
+    public AuthorizationServerSettings authorizationServerSettings(@Value("${spring.security.oauth2.authorizationserver.issuer}") String issuerUri) {
+        return AuthorizationServerSettings.builder().issuer(issuerUri).build();
     }
 }
