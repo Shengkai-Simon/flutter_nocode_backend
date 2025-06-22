@@ -2,14 +2,13 @@ package dev.skyang.projectservice.controller;
 
 import com.github.fge.jsonpatch.JsonPatch;
 import dev.skyang.projectservice.config.ApiPaths;
-import dev.skyang.projectservice.dto.CreateProjectRequest;
 import dev.skyang.projectservice.dto.ProjectDetailResponse;
+import dev.skyang.projectservice.dto.ProjectMetadataRequest;
 import dev.skyang.projectservice.dto.ProjectSummaryResponse;
 import dev.skyang.projectservice.service.ProjectService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -25,12 +24,12 @@ public class ProjectController {
     private ProjectService projectService;
 
     @PostMapping("/projects")
-    public ResponseEntity<ProjectDetailResponse> createProject(
-            @Valid @RequestBody CreateProjectRequest request,
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProjectDetailResponse createProject(
+            @Valid @RequestBody ProjectMetadataRequest request,
             @AuthenticationPrincipal Jwt principal) {
         Long userId = principal.getClaim("uid");
-        ProjectDetailResponse createdProject = projectService.createProject(request, userId);
-        return new ResponseEntity<>(createdProject, HttpStatus.CREATED);
+        return projectService.createProject(request, userId);
     }
 
     @GetMapping("/projects")
@@ -56,16 +55,24 @@ public class ProjectController {
         projectService.deleteProject(id, userId);
     }
 
-    @PatchMapping(path = "/projects/{id}", consumes = "application/json-patch+json")
-    public ProjectDetailResponse patchProject(
+    @PatchMapping("/projects/{id}")
+    public ProjectDetailResponse updateProjectMetadata(
             @PathVariable Long id,
-            @RequestBody JsonPatch patch, // Use the JsonPatch object directly
+            @Valid @RequestBody ProjectMetadataRequest request,
+            @AuthenticationPrincipal Jwt principal) {
+        Long userId = principal.getClaim("uid");
+        return projectService.updateProjectMetadata(id, request, userId);
+    }
+
+    @PatchMapping(path = "/projects/{id}/data", consumes = "application/json-patch+json")
+    public ProjectDetailResponse patchProjectData(
+            @PathVariable Long id,
+            @RequestBody JsonPatch patch,
             @AuthenticationPrincipal Jwt principal) {
         Long userId = principal.getClaim("uid");
         try {
-            return projectService.patchProject(id, patch, userId);
+            return projectService.patchProjectData(id, patch, userId);
         } catch (Exception e) {
-            // A more specific exception handling can be done in GlobalExceptionHandler
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to apply patch.", e);
         }
     }

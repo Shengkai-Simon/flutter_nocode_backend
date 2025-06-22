@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
-import dev.skyang.projectservice.dto.CreateProjectRequest;
 import dev.skyang.projectservice.dto.ProjectDetailResponse;
+import dev.skyang.projectservice.dto.ProjectMetadataRequest;
 import dev.skyang.projectservice.dto.ProjectSummaryResponse;
 import dev.skyang.projectservice.exception.ProjectAccessDeniedException;
 import dev.skyang.projectservice.exception.ProjectNotFoundException;
@@ -29,7 +29,7 @@ public class ProjectService {
     private ObjectMapper objectMapper; // Spring Boot auto-configures this bean
 
     @Transactional
-    public ProjectDetailResponse createProject(CreateProjectRequest request, Long userId) {
+    public ProjectDetailResponse createProject(ProjectMetadataRequest request, Long userId) {
         Project project = new Project();
         project.setName(request.getName());
         project.setDescription(request.getDescription());
@@ -61,7 +61,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public ProjectDetailResponse patchProject(Long projectId, JsonPatch patch, Long userId) throws JsonPatchException, IOException {
+    public ProjectDetailResponse patchProjectData(Long projectId, JsonPatch patch, Long userId) throws JsonPatchException, IOException {
         // 1. Find the project and verify ownership
         Project project = findProjectByIdAndVerifyOwnership(projectId, userId);
 
@@ -97,5 +97,22 @@ public class ProjectService {
         }
 
         return project;
+    }
+
+    @Transactional
+    public ProjectDetailResponse updateProjectMetadata(Long projectId, ProjectMetadataRequest request, Long userId) {
+        // Find the project and verify ownership
+        Project project = findProjectByIdAndVerifyOwnership(projectId, userId);
+
+        if (request.getName() != null) {
+            project.setName(request.getName());
+        }
+
+        if (request.getDescription() != null) {
+            project.setDescription(request.getDescription());
+        }
+
+        Project updatedProject = projectRepository.save(project);
+        return new ProjectDetailResponse(updatedProject, objectMapper);
     }
 }
