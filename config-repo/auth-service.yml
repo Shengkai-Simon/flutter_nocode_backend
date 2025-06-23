@@ -24,3 +24,10 @@ rsa:
   key:
     private-key: ${RSA_PRIVATE_KEY}
     public-key: ${RSA_PUBLIC_KEY}
+
+app:
+  sso:
+    cookie-name: "authToken"
+    # For localhost development, domain should be omitted
+    # domain:
+    max-age-seconds: 3600 # 1 hour
