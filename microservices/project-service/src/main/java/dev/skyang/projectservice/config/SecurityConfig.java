@@ -1,5 +1,6 @@
 package dev.skyang.projectservice.config;
 
+import dev.skyang.projectservice.security.CookieBearerTokenResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,9 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthConverter jwtAuthConverter;
 
+    @Autowired
+    private CookieBearerTokenResolver cookieBearerTokenResolver;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -30,8 +34,8 @@ public class SecurityConfig {
                         .anyRequest().denyAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)));
-
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
+                .bearerTokenResolver(cookieBearerTokenResolver));
         return http.build();
     }
 }

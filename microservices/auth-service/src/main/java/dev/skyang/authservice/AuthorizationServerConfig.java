@@ -7,7 +7,9 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import dev.skyang.authservice.config.ApiPaths;
 import dev.skyang.authservice.config.RsaKeyProperties;
+import dev.skyang.authservice.security.CookieBearerTokenResolver;
 import dev.skyang.authservice.security.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,6 +48,9 @@ import java.util.UUID;
 @Configuration
 public class AuthorizationServerConfig {
 
+    @Autowired
+    private CookieBearerTokenResolver cookieBearerTokenResolver;
+
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -58,7 +63,17 @@ public class AuthorizationServerConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(authorize -> authorize.requestMatchers(ApiPaths.PUBLIC_BASE + ApiPaths.LOGIN).permitAll().requestMatchers(ApiPaths.API_BASE + ApiPaths.LOGOUT).authenticated().anyRequest().authenticated()).oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults())).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(ApiPaths.PUBLIC_BASE + "/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(resourceServer -> resourceServer
+                        .jwt(Customizer.withDefaults())
+                        .bearerTokenResolver(cookieBearerTokenResolver)
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
 

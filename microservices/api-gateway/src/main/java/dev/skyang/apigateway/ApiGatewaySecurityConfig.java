@@ -2,6 +2,8 @@ package dev.skyang.apigateway;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skyang.apigateway.config.CookieAuthenticationConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -23,6 +25,9 @@ import java.util.Map;
 @EnableWebFluxSecurity
 public class ApiGatewaySecurityConfig {
 
+    @Autowired
+    private CookieAuthenticationConverter cookieAuthenticationConverter;
+
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
@@ -36,6 +41,7 @@ public class ApiGatewaySecurityConfig {
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenConverter(cookieAuthenticationConverter)
                         .jwt(Customizer.withDefaults())
                         .authenticationEntryPoint(customAuthenticationEntryPoint())
                 );

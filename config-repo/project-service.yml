@@ -1,6 +1,10 @@
 server:
   port: ${SERVER_PORT:9200}
 
+app:
+  sso:
+    cookie-name: "authToken"
+
 spring:
   application:
     name: ${APP_NAME:project-service}
