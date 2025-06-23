@@ -1,6 +1,5 @@
 import {Route, Routes} from "react-router-dom";
 import DashboardLayout from "@/layouts/dashboard/Dashboard.tsx";
-import EditorLayout from "@/layouts/editor/Editor.tsx";
 import {navRoutes} from "@/lib/navRoutes.ts";
 import AuthLayout from "@/layouts/auth/AuthLayout.tsx";
 import LoginPage from "@/layouts/auth/LoginPage.tsx";
@@ -32,7 +31,6 @@ export default function AppRoutes() {
             {/* Protected navRoutes */}
             <Route element={<ProtectedRoute />}>
                 <Route path={navRoutes.dashboard} element={<DashboardLayout />} />
-                <Route path={navRoutes.editorPath} element={<EditorLayout />} />
             </Route>
         </Routes>
     );

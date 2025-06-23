@@ -39,14 +39,16 @@ export default function LoginPage() {
     });
 
     const loginMutation = useMutation({
-        mutationFn: (credentials: FormValues) => api.post<{ accessToken: string }>(apiPaths.login, credentials),
-        onSuccess: async (data) => {
-            await login(data.accessToken);
+        mutationFn: (credentials: FormValues) => api.post(apiPaths.login, credentials),
+        onSuccess: async () => {
+            await login();
             navigate(navRoutes.dashboard);
         },
         onError: (error) => {
             if (error.message === lockedMsg) {
-                setIsAccountLocked(true);
+                if (error.message === lockedMsg) {
+                    setIsAccountLocked(true);
+                }
             }
         },
     });

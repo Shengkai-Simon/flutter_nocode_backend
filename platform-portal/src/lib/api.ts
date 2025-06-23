@@ -13,13 +13,11 @@ export class ApiError extends Error {
 }
 
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
-    const { token } = useAuthStore.getState();
     const defaultHeaders: HeadersInit = { 'Content-Type': 'application/json' };
 
-    if (token && !url.includes('/public/')) {
-        defaultHeaders['Authorization'] = `Bearer ${token}`;
-    }
     options.headers = { ...defaultHeaders, ...options.headers };
+
+    options.credentials = 'include';
 
     const response = await fetch(url, options);
 
