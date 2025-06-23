@@ -1,10 +1,7 @@
 package dev.skyang.userservice;
 
-import dev.skyang.userservice.config.ApiPaths;
-import dev.skyang.userservice.config.CustomAccessDeniedHandler;
-import dev.skyang.userservice.config.InternalApiSecretFilter;
-import dev.skyang.userservice.config.JwtAuthConverter;
-import dev.skyang.userservice.config.RoleConstants;
+import dev.skyang.userservice.config.*;
+import dev.skyang.userservice.security.CookieBearerTokenResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +25,9 @@ public class SecurityConfig {
 
     @Autowired
     private InternalApiSecretFilter internalApiSecretFilter;
+
+    @Autowired
+    private CookieBearerTokenResolver cookieBearerTokenResolver;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -57,6 +57,7 @@ public class SecurityConfig {
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
+                        .bearerTokenResolver(cookieBearerTokenResolver)
                 );
 
         return http.build();
