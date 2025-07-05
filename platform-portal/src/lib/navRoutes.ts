@@ -1,7 +1,7 @@
 export const navRoutes = {
     dashboard: "/",
-    editor: (projectId: string | number) => `/flutter/${projectId}`,
-    editorPath: "/editor/:projectId",
+    editor: (projectId: string | number) => `/flutter/?id=${projectId}`,
+    editorPath: "/editor",
     login: "/login",
     register: "/register",
     verify: "/verify",

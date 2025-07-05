@@ -19,6 +19,7 @@ import {Input} from "@/components/ui/input";
 import {api} from "@/lib/api";
 import {apiPaths} from "@/lib/apiPaths.ts";
 import {navRoutes} from "@/lib/navRoutes.ts";
+import {useNavigate} from "react-router-dom";
 
 
 type FormValues = z.infer<typeof projectFormSchema>;
@@ -36,6 +37,7 @@ interface CreateProjectModalProps {
 
 export function CreateProjectModal({open, onOpenChange}: CreateProjectModalProps) {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const form = useForm<FormValues>({
         resolver: zodResolver(projectFormSchema),
         defaultValues: {name: "", description: ""},
@@ -50,7 +52,7 @@ export function CreateProjectModal({open, onOpenChange}: CreateProjectModalProps
         onSuccess: (newProject) => {
             queryClient.invalidateQueries({queryKey: ['projects']}).then(() => {
                 onOpenChange(false);
-                window.location.replace(navRoutes.editor(newProject.id));
+                navigate(`${navRoutes.editorPath}?id=${newProject.id}`);
             });
         },
     });

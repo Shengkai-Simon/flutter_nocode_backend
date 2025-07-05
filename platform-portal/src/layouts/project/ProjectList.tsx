@@ -13,6 +13,7 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 import {EmptyState, ErrorState} from "@/components/ProjectListStates.tsx";
 import {CreateProjectModal} from "@/components/CreateProjectModal.tsx";
 import {EditProjectModal} from "@/components/EditProjectModal.tsx";
+import {Link} from "react-router-dom";
 
 interface Project {
     id: number;
@@ -161,9 +162,11 @@ export default function ProjectList({className, ...props}: React.ComponentProps<
                             </p>
                         </CardContent>
                         <CardFooter className="flex flex-row-reverse">
-                            <Button onClick={() => window.location.replace(navRoutes.editor(project.id))}>
-                                Open Editor
-                            </Button>
+                            <Link to={`${navRoutes.editorPath}?id=${project.id}`}>
+                                <Button>
+                                    Open Editor
+                                </Button>
+                            </Link>
                         </CardFooter>
                     </Card>
                 ))}
