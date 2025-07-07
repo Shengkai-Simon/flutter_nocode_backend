@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { findOrCreateSession, addMessageToHistory, getHistoryForSession } from '../services/history.service';
 import { getAiRawResponse } from '../services/gemini.service';
+import { ResponseHandler } from '../utils/response.util'
 import { z } from 'zod';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -25,13 +26,13 @@ const SYSTEM_PROMPT = `
 ## 2. The output structure must also be JSON (syntax example that must be followed). Here is the output JSON format: ${JSON.stringify(outputFormat)}
 `;
 
-export const handleNewMessage = async (req: Request, res: Response): Promise<void> => {
-    const { sessionId } = req.params;
-    const { content, projectId } = req.body;
-
+export const handleNewMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+        const { sessionId } = req.params;
+        const { content, projectId } = req.body;
+
         if (!content || !projectId) {
-            res.status(400).json({ error: '`content` and `projectId` are required.' });
+            ResponseHandler.error(res, '`content` and `projectId` are required.', 400);
             return;
         }
 
@@ -86,15 +87,10 @@ export const handleNewMessage = async (req: Request, res: Response): Promise<voi
             console.error(`[Controller] Last Failure Reason: ${lastFailureReason}`);
             console.error(`[Controller] Last Raw AI Response: ${lastRawResponseText}`);
 
-            res.status(500).json({ error: "Failed to get a valid response from AI after multiple attempts." });
+            const finalError = new Error("Failed to get a valid response from AI after multiple attempts.");
+            next(finalError);
         }
-
     } catch (error) {
-        let errorMessage = 'Internal server error';
-        if (error instanceof Error) {
-            console.error('Error in handleNewMessage:', error.stack);
-            errorMessage = error.message;
-        }
-        res.status(500).json({ error: errorMessage });
+        next(error);
     }
 };
