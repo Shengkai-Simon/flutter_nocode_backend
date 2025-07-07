@@ -1,31 +1,46 @@
 import {useSearchParams, useLocation, Link} from 'react-router-dom';
 import {navRoutes} from '@/lib/navRoutes';
-import {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
+import {useAiAssistantStore} from "@/stores/useAiAssistantStore.ts";
+import {AiAssistant} from "@/components/AiAssistant.tsx";
 
 export default function EditorPage() {
     // Get the projectId from the URL
     const [searchParams] = useSearchParams();
     const location = useLocation();
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const { setSelectedComponent } = useAiAssistantStore();
+    const [isHandshakeComplete, setIsHandshakeComplete] = useState(false);
 
     const projectId = searchParams.get('id');
 
-    // Set the listener for postMessage
     useEffect(() => {
         const handleMessageFromFlutter = (event: MessageEvent) => {
-            // Security check: Make sure the source of the message is a trusted source for your Flutter app
-            // if (event.origin !== 'YOUR_FLUTTER_APP_ORIGIN') return;
-
-            console.log("Received message from Flutter Editor:", event.data);
-            // Handle messages from Flutter, such as saving data, updating the UI, etc
+            const { type, payload } = event.data;
+            console.log('React Received Message: ', event.data);
+            switch (type) {
+                case 'flutterReady':
+                    console.log('Handshake complete: Received flutterReady signal.');
+                    setIsHandshakeComplete(true);
+                    break;
+                case 'selectionChanged':
+                    console.log('Received selection from Flutter:', payload);
+                    setSelectedComponent(payload);
+                    break;
+                default:
+                    break;
+            }
         };
-
         window.addEventListener('message', handleMessageFromFlutter);
+        return () => window.removeEventListener('message', handleMessageFromFlutter);
+    }, [setSelectedComponent]);
 
-        return () => {
-            window.removeEventListener('message', handleMessageFromFlutter);
-        };
-    }, [projectId]);
+    const initiateHandshake = () => {
+        if (iframeRef.current?.contentWindow) {
+            console.log('React is ready, initiating handshake...');
+            iframeRef.current.contentWindow.postMessage({ type: 'reactReady' }, '*');
+        }
+    };
 
     if (!projectId) {
         return (
@@ -35,6 +50,7 @@ export default function EditorPage() {
             </div>
         )
     }
+
     const iframeKey = location.key;
     const flutterAppUrl = navRoutes.editor(projectId);
     return (
@@ -43,9 +59,13 @@ export default function EditorPage() {
                 key={iframeKey}
                 ref={iframeRef}
                 src={flutterAppUrl}
-                style={{width: '100%', height: '100%', border: 'none'}}
+                style={{ width: '100%', height: '100%', border: 'none' }}
                 title="Flutter Editor"
+                onLoad={initiateHandshake} // iframe 加载后，由 React 主动发起握手
             />
+            {isHandshakeComplete && (
+                <AiAssistant iframeRef={iframeRef as React.RefObject<HTMLIFrameElement>} />
+            )}
         </div>
     );
 }
