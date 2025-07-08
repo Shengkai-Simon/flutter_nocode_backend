@@ -81,7 +81,7 @@ export const handleNewMessage = async (req: Request, res: Response, next: NextFu
         }
 
         if (lastSuccessfulAiResponse) {
-            res.status(200).json(lastSuccessfulAiResponse);
+            ResponseHandler.success(res, lastSuccessfulAiResponse)
         } else {
             console.error(`[Controller] Final failure: AI did not provide a valid response after all retries for session ${sessionId}.`);
             console.error(`[Controller] Last Failure Reason: ${lastFailureReason}`);
