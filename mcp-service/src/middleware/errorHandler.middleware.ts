@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { ResponseHandler } from '../utils/response.util';
+import {NextFunction, Request, Response} from 'express';
+import {ResponseHandler} from '../utils/response.util';
 
 /**
  * Global error handling middleware
@@ -9,16 +9,18 @@ import { ResponseHandler } from '../utils/response.util';
  * @param next - Express NextFunction object
  */
 const errorHandler = (
-    err: Error,
+    err: any, // Change the type to any to access the custom attributes
     req: Request,
     res: Response,
     next: NextFunction
 ): void => {
-    // Different status codes and messages can be returned based on the type of err (e.g., ZodError, PrismaError, etc.).
     console.error('[Global Error Handler]:', err.stack);
 
-    // Default returns 500 Internal Server Error
-    ResponseHandler.error(res, err.message || 'An unexpected error occurred.', 500);
+    // Check if a custom status code is attached to the error
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'An unexpected error occurred.';
+
+    ResponseHandler.error(res, message, statusCode);
 };
 
 export default errorHandler;

@@ -1,24 +1,29 @@
 import express, { Application, Request, Response } from 'express';
-import 'dotenv/config'; // Make sure the environment variables are loaded
+import 'dotenv/config';
 
 import sessionRoutes from './api/session.routes';
 import projectRoutes from './api/project.routes';
 
 import errorHandler from './middleware/errorHandler.middleware';
+import verifyInternalApiKey  from './middleware/apiKey.middleware';
+
 import { ResponseHandler } from './utils/response.util';
 
 import eurekaClient from './config/eureka';
+
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+// This public health check endpoint does not need the API key
 app.get('/health', (req: Request, res: Response) => {
     ResponseHandler.success(res, { status: 'UP', timestamp: new Date() });
 });
 
-app.use('/api/', sessionRoutes);
-app.use('/api/', projectRoutes);
+app.use(verifyInternalApiKey)
+
+app.use('/api', [sessionRoutes, projectRoutes]);
 
 app.use(errorHandler);
 

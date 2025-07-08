@@ -9,21 +9,21 @@ datasource db {
 }
 
 model Session {
-  id        String     @id @default(uuid())
+  id        String    @id
   title     String?
-  createdAt DateTime   @default(now())
-
+  createdAt DateTime  @default(now())
   projectId String
-
-  messages  Message[]
+  messages  Message[] // Relation to Message model
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  role      String   // "user", "model", or "system"
-  content   String
+  id        String   @id @default(cuid())
+  role      String
+  content   String   // For user/system, the original text is stored; For models, store the raw JSON string returned by AI
   createdAt DateTime @default(now())
-
-  session   Session  @relation(fields: [sessionId], references: [id])
   sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+
+  userMessage String? // Store text messages extracted from AI responses for presentation to users
+  projectData Json?   // Stores JSON objects extracted from AI responses that represent the state of the UI
 }

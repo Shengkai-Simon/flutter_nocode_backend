@@ -1,9 +1,29 @@
 import prisma from '../config/prisma';
-import {Message, Session} from '@prisma/client';
+import {Message, Prisma, Session} from '@prisma/client';
 
 // Define the types of message roles we need to ensure consistency
 type MessageRole = 'user' | 'model' | 'system';
 
+/**
+ * Lookup the session based on the ID and throw an error if it doesn't exist
+ * @param sessionId - The ID of the session to be found
+ * @returns Returns the found session object
+ * @throws If the session does not exist, an error with a specific message is thrown
+ */
+export const findSessionById = async (sessionId: string): Promise<Session> => {
+    const session = await prisma.session.findUnique({
+        where: { id: sessionId },
+    });
+
+    if (!session) {
+        // This error is caught by the global error handler and returned to the client with a standard 404 response
+        const error = new Error(`Session Ie: ${sessionId}) does not exist.`);
+        // Attach a status code so that the global error handler can return a 404
+        (error as any).statusCode = 404;
+        throw error;
+    }
+    return session;
+};
 
 /**
  * Get a list of all sessions under it based on projectId
@@ -31,22 +51,19 @@ export const listSessionsByProjectId = async (projectId: string): Promise<Sessio
  * @param sessionId - The ID of the session to be deleted
  */
 export const deleteSession = async (sessionId: string): Promise<void> => {
+    // Verify that the session exists before deleting it
+    await findSessionById(sessionId);
+
     try {
-        // Because of the constraints between Message and Session,
-        // we need to delete the message and then the conversation in a transaction
         await prisma.$transaction([
-            prisma.message.deleteMany({
-                where: { sessionId: sessionId },
-            }),
-            prisma.session.delete({
-                where: { id: sessionId },
-            }),
+            prisma.message.deleteMany({ where: { sessionId: sessionId } }),
+            prisma.session.delete({ where: { id: sessionId } }),
         ]);
     } catch (error) {
         console.error(`Error deleting session ${sessionId}:`, error);
         throw new Error('Failed to delete session.');
     }
-}
+};
 
 /**
  * Find or create a new session.
@@ -72,19 +89,18 @@ export const findOrCreateSession = async (sessionId: string, projectId: string):
 }
 
 /**
- * Get all historical messages based on session ID
- * @param sessionId - Sessional UUID
- * @returns Returns an array of messages in ascending chronological order
+ *  Get all historical messages based on session ID
+ *  @param sessionId - The UUID of the session
+ *  @returns Returns an array of messages in ascending chronological order
  */
 export const getHistoryForSession = async (sessionId: string): Promise<Message[]> => {
+    // Verify that the session exists before performing any action
+    await findSessionById(sessionId);
+
     try {
         return await prisma.message.findMany({
-            where: {
-                sessionId: sessionId,
-            },
-            orderBy: {
-                createdAt: 'asc', // Make sure the history is chronological
-            },
+            where: {sessionId: sessionId},
+            orderBy: {createdAt: 'asc'},
         });
     } catch (error) {
         console.error(`Error fetching history for session ${sessionId}:`, error);
@@ -97,15 +113,41 @@ export const getHistoryForSession = async (sessionId: string): Promise<Message[]
  * @param sessionId - sessional UUID
  * @param role - The role of the message ('user', 'model', 'system')
  * @param content - The content of the message
+ * @param options - An object that contains optional structured data
  * @returns Returns the newly created message object
  */
-export const addMessageToHistory = async (sessionId: string, role: MessageRole, content: string): Promise<Message> => {
+export const addMessageToHistory = async (
+    sessionId: string,
+    role: MessageRole,
+    content: string,
+    options?: {
+        userMessage?: string;
+        projectData?: Prisma.JsonValue;
+    }
+): Promise<Message> => {
     try {
+        let finalContent = content;
+
+        // If it's a model role and you have projectData, content is a formatted JSON string
+        if (role === 'model' && options?.projectData) {
+            try {
+                // Parse the original content and then re-stringify it into an unformatted string
+                const parsedObject = JSON.parse(content);
+                finalContent = JSON.stringify(parsedObject);
+                console.log('[History Service] Minified model content before saving to DB.');
+            } catch (e) {
+                // If parsing fails, the original, uncompressed content is still saved in case of data loss
+                console.warn('[History Service] Could not minify model content, saving raw version.');
+            }
+        }
+
         return await prisma.message.create({
             data: {
                 sessionId: sessionId,
                 role: role,
-                content: content,
+                content: finalContent, // Use processed content
+                userMessage: options?.userMessage,
+                projectData: options?.projectData ?? undefined,
             },
         });
     } catch (error) {
