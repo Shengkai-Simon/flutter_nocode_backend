@@ -139,6 +139,8 @@ services:
       DATABASE_URL: ${MCP_DATABASE_URL}
       APP_NAME: mcp-service
       EUREKA_URL: ${EUREKA_URL}
+      INTERNAL_API_KEY_PRIMARY: ${INTERNAL_API_KEY_PRIMARY}
+      INTERNAL_API_KEY_SECONDARY: ${INTERNAL_API_KEY_SECONDARY}
     depends_on:
       - config-service
       - discovery-service
