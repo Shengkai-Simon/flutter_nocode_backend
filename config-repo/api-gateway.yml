@@ -68,3 +68,16 @@ spring:
                 redis-rate-limiter:
                   replenishRate: 10
                   burstCapacity: 20
+
+        - id: mcp-service-route
+          uri: lb://mcp-service
+          predicates:
+            - Path=/api/mcp/**
+          filters:
+            - RewritePath=/api/mcp/(?<path>.*), /api/$\{path}
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter:
+                  replenishRate: 10
+                  burstCapacity: 20
