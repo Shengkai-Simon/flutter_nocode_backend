@@ -7,20 +7,35 @@ import projectRoutes from './api/project.routes';
 import errorHandler from './middleware/errorHandler.middleware';
 import { ResponseHandler } from './utils/response.util';
 
+import eurekaClient from './config/eureka';
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
 app.get('/health', (req: Request, res: Response) => {
-    ResponseHandler.success(res, { status: 'OK', timestamp: new Date() });
+    ResponseHandler.success(res, { status: 'UP', timestamp: new Date() });
 });
 
-app.use('/api/v1', sessionRoutes);
-app.use('/api/v1', projectRoutes);
+app.use('/api/', sessionRoutes);
+app.use('/api/', projectRoutes);
 
 app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`MCP Service is running on port ${PORT}`);
+    eurekaClient.start(error => {
+        if (error) {
+            console.error('Eureka registration failed:', error);
+        } else {
+            console.log('Eureka client registered successfully.');
+        }
+    });
+});
+
+process.on('SIGINT', () => {
+    eurekaClient.stop(() => {
+        console.log('Eureka client stopped.');
+        process.exit();
+    });
 });
