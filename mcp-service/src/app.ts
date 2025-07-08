@@ -21,10 +21,22 @@ app.get('/health', (req: Request, res: Response) => {
     ResponseHandler.success(res, { status: 'UP', timestamp: new Date() });
 });
 
-app.use(verifyInternalApiKey)
+// 1. Define a router dedicated to handling internal service calls
+const internalRouter = express.Router();
+//    and apply API key validation middleware to this router
+internalRouter.use(verifyInternalApiKey);
+//    (In the future, any internal interfaces will be mounted on the internalRouter)
+//    e.g., internalRouter.use('/some-internal-feature', ...);
 
-app.use('/api', [sessionRoutes, projectRoutes]);
+// 2. Define the router that processes user requests from the gateway
+const apiRouter = express.Router();
+apiRouter.use([sessionRoutes, projectRoutes]); // Currently, all service interfaces serve users
 
+// 3. Mount the two routers on the main app and use different path prefixes
+app.use('/api', apiRouter); // User API, no key required
+app.use('/api/internal', internalRouter); // Internal API, which requires a key
+
+// Error handler
 app.use(errorHandler);
 
 app.listen(PORT, () => {
