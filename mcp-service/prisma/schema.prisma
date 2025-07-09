@@ -8,12 +8,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum SessionType {
+  CREATE
+  ADJUST
+}
+
 model Session {
   id        String    @id
   title     String?
   createdAt DateTime  @default(now())
   projectId String
   messages  Message[] // Relation to Message model
+  sessionType SessionType  @default(CREATE)
 }
 
 model Message {
