@@ -17,7 +17,7 @@ export const findSessionById = async (sessionId: string): Promise<Session> => {
 
     if (!session) {
         // This error is caught by the global error handler and returned to the client with a standard 404 response
-        const error = new Error(`Session Ie: ${sessionId}) does not exist.`);
+        const error = new Error(`Session Id: ${sessionId} does not exist.`);
         // Attach a status code so that the global error handler can return a 404
         (error as any).statusCode = 404;
         throw error;
@@ -64,29 +64,6 @@ export const deleteSession = async (sessionId: string): Promise<void> => {
         throw new Error('Failed to delete session.');
     }
 };
-
-/**
- * Find or create a new session.
- * @param sessionId - The session ID that we want to find or create
- * @param projectId - The ID of the project to which the session belongs
- * @returns Returns found or newly created session objects
- */
-export const findOrCreateSession = async (sessionId: string, projectId: string): Promise<Session> => {
-    try {
-        return await prisma.session.upsert({
-            where: {id: sessionId},
-            update: {},
-            create: {
-                id: sessionId,
-                projectId: projectId,
-                title: 'New Conversation',
-            },
-        });
-    } catch (error) {
-        console.error(`Error finding or creating session ${sessionId}:`, error);
-        throw new Error('Failed to find or create session.');
-    }
-}
 
 /**
  *  Get all historical messages based on session ID
