@@ -8,11 +8,10 @@ const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig, safetySettings });
 
 export const getAiTitle = async (initialContent: string): Promise<string> => {
     const titleGenModel = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash-lite',
         generationConfig: { responseMimeType: "text/plain" },
         safetySettings
     });
@@ -27,16 +26,19 @@ export const getAiTitle = async (initialContent: string): Promise<string> => {
     }
 };
 
-
 /**
  * Call the Gemini API directly and return the original text response.
  * @param finalContents - A final Content array that has been built by the PromptService.
  * @returns Raw string response from AI.
  */
 export const getAiRawResponse = async (finalContents: Content[]): Promise<string> => {
-    console.log(`[Gemini Service] Sending final payload to Gemini API: ${finalContents}`);
+    console.log(`[Gemini Service] Sending final payload to Gemini API: ${JSON.stringify(finalContents)}`);
     try {
-        const result = await model.generateContent({ contents: finalContents });
+        const result = await genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+            generationConfig,
+            safetySettings
+        }).generateContent({contents: finalContents});
         return result.response.text();
     } catch (error) {
         console.error("\n[ERROR] Gemini API call failed:", error);

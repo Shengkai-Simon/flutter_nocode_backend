@@ -2,19 +2,21 @@ import { v4 as uuidv4 } from 'uuid';
 import prisma from '../config/prisma';
 import { getAiRawResponse, getAiTitle } from './gemini.service';
 import { AiResponseSchema } from '../config/ai.config';
-import { Message, Session, SessionType } from "@prisma/client";
+import { Session, SessionType } from "@prisma/client";
 import { z } from "zod";
 import { withRetry } from '../utils/retry.util';
 import { buildFinalPrompt } from './prompt.service';
+import { addMessageToHistory } from './history.service';
 
 /**
- * Internal core functions that handle all the business logic for creating a new session.
- * It encapsulates AI calls, response validation, retries, and database transactions.
+ * Internal core function that handles all business logic for creating a new session.
+ * It now aligns with the "State Modification" architecture.
+ *
  * @param projectId - Parent project ID
  * @param sessionType - Session type ('CREATE' or 'ADJUST')
  * @param content - Text input from the user
- * @param initialJsonLayout - [optional] INITIAL JSON LAYOUT FOR TYPE 'ADJUST'
- * @returns Returns the newly created session and the verified AI response
+ * @param initialJsonLayout - [Optional] The initial JSON layout for type 'ADJUST'
+ * @returns The newly created session and the verified AI response
  */
 const createSessionInternal = async (
     projectId: string,
@@ -22,22 +24,26 @@ const createSessionInternal = async (
     content: string,
     initialJsonLayout?: object
 ): Promise<{ newSession: Session; validatedResponse: any }> => {
-    const tempHistoryForAi: Partial<Message>[] = [];
     let rawResponseText = '';
 
     const validatedResponseString = await withRetry({
         action: async (correctionMessage?: string) => {
+            let userTaskContent = content;
             if (correctionMessage) {
-                tempHistoryForAi.length = 0;
-                tempHistoryForAi.push({ role: 'system', content: correctionMessage });
+                // If there's a correction message, prepend it to the user's original request.
+                userTaskContent = `${correctionMessage}\n\nOriginal Request: ${content}`;
             }
+
+            // Call the simplified buildFinalPrompt.
+            // It will infer whether to use the CREATE or ADJUST template based on
+            // the presence of `initialJsonLayout`.
             const finalPrompt = buildFinalPrompt(
-                tempHistoryForAi as Message[],
-                sessionType,
+                userTaskContent,
                 initialJsonLayout
             );
+
             rawResponseText = await getAiRawResponse(finalPrompt);
-            console.log(`[project.service -> createSessionInternal -> getAiRawResponse response]: ${rawResponseText}`)
+            console.log(`[project.service -> createSessionInternal -> getAiRawResponse response]: ${rawResponseText}`);
             return rawResponseText;
         },
         validate: (response) => {
@@ -73,18 +79,20 @@ const createSessionInternal = async (
         const session = await tx.session.create({
             data: { id: newSessionId, projectId, title, sessionType }
         });
-        await tx.message.create({
-            data: { sessionId: newSessionId, role: 'user', content }
-        });
-        await tx.message.create({
-            data: {
-                sessionId: newSessionId,
-                role: 'model',
-                content: rawResponseText,
+
+        // Use the centralized addMessageToHistory function to ensure data consistency
+        await addMessageToHistory(newSessionId, 'user', content, {}, tx);
+        await addMessageToHistory(
+            newSessionId,
+            'model',
+            rawResponseText,
+            {
                 userMessage: finalValidatedResponse.userMessage,
                 projectData: finalValidatedResponse.data ?? undefined,
-            }
-        });
+            },
+            tx
+        );
+
         return session;
     });
 

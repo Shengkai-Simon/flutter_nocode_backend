@@ -4,7 +4,6 @@ import { AiResponse, AiResponseSchema } from '../config/ai.config';
 import { withRetry } from '../utils/retry.util';
 import { z } from "zod";
 import { buildFinalPrompt } from './prompt.service';
-import {SessionType} from "@prisma/client";
 
 /**
  * Add a new message to an existing session and get a validated AI response.
@@ -26,19 +25,36 @@ export const addMessageAndGetValidatedResponse = async (sessionId: string, userC
     // 3. Use the withRetry tool to get and validate the response of the AI
     const validatedResponseString = await withRetry({
         action: async (correctionMessage?: string) => {
-            // If there is a remediation message, add it to the end of history as a 'system' message
+            // If there's a correction message, we need to handle it.
+            // For now, we'll treat it as a new request on the last known good state.
+            let userTaskContent = userContent;
             if (correctionMessage) {
-                await addMessageToHistory(sessionId, 'system', correctionMessage);
+                // Prepend the correction instruction to the user's original request.
+                userTaskContent = `${correctionMessage}\n\nOriginal Request: ${userContent}`;
             }
 
-            // Get up-to-date history
+            // Get the full history to find the last known state.
             const currentHistory = await getHistoryForSession(sessionId);
+            // Find the most recent 'model' message that has project data.
+            const lastModelMessageWithState = [...currentHistory]
+                .reverse()
+                .find(m => m.role === 'model' && m.projectData);
 
-            // Call the PromptService to build the final Prompt
-            const finalPrompt = buildFinalPrompt(currentHistory, SessionType.CREATE);
+            const projectDataForPrompt = lastModelMessageWithState?.projectData
+                ? lastModelMessageWithState.projectData as object
+                : undefined;
 
-            // Send the built Prompt to the simplified Gemini Service
+            // Build the final prompt. It will automatically select ADJUST or CREATE template
+            // based on whether projectDataForPrompt exists.
+            // Crucially, we are NOT passing the conversation history anymore.
+            const finalPrompt = buildFinalPrompt(
+                userTaskContent,
+                projectDataForPrompt
+            );
+
+            // Send the constructed prompt to the Gemini Service
             rawResponseText = await getAiRawResponse(finalPrompt);
+            console.log(`[session.service -> addMessageAndGetValidatedResponse response]: ${rawResponseText}`)
             return rawResponseText;
         },
         validate: (response) => {

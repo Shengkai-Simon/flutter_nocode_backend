@@ -1,8 +1,11 @@
 import prisma from '../config/prisma';
-import {Message, Prisma, Session} from '@prisma/client';
+import {Message, Prisma, PrismaClient, Session} from '@prisma/client';
 
 // Define the types of message roles we need to ensure consistency
 type MessageRole = 'user' | 'model' | 'system';
+
+// Define a type for the Prisma client, which can be the global instance or a transaction client
+type PrismaClientInstance = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
 /**
  * Lookup the session based on the ID and throw an error if it doesn't exist
@@ -86,11 +89,15 @@ export const getHistoryForSession = async (sessionId: string): Promise<Message[]
 };
 
 /**
- * Add a new message to the specified meeting ID
+ * Add a new message to the specified meeting ID.
+ * This function now contains the logic to minify JSON content from the model.
+ * It can also run within a Prisma transaction if a transaction client is provided.
+ *
  * @param sessionId - sessional UUID
  * @param role - The role of the message ('user', 'model', 'system')
  * @param content - The content of the message
  * @param options - An object that contains optional structured data
+ * @param tx - [Optional] A Prisma transaction client.
  * @returns Returns the newly created message object
  */
 export const addMessageToHistory = async (
@@ -100,29 +107,33 @@ export const addMessageToHistory = async (
     options?: {
         userMessage?: string;
         projectData?: Prisma.JsonValue;
-    }
+    },
+    tx?: PrismaClientInstance
 ): Promise<Message> => {
-    try {
-        let finalContent = content;
+    // Use the transaction client if provided, otherwise use the global prisma client
+    const db = tx || prisma;
+    let finalContent = content;
 
-        // If it's a model role and you have projectData, content is a formatted JSON string
-        if (role === 'model' && options?.projectData) {
-            try {
-                // Parse the original content and then re-stringify it into an unformatted string
-                const parsedObject = JSON.parse(content);
-                finalContent = JSON.stringify(parsedObject);
-                console.log('[History Service] Minified model content before saving to DB.');
-            } catch (e) {
-                // If parsing fails, the original, uncompressed content is still saved in case of data loss
-                console.warn('[History Service] Could not minify model content, saving raw version.');
-            }
+    // For 'model' roles, we minify the JSON content to save space and ensure consistency.
+    if (role === 'model') {
+        try {
+            // Parse the original content string (which may have newlines)
+            const parsedObject = JSON.parse(content);
+            // Re-stringify it into a compact, single-line string
+            finalContent = JSON.stringify(parsedObject);
+            console.log('[History Service] Minified model content before saving to DB.');
+        } catch (e) {
+            // If parsing fails for any reason, save the raw content to prevent data loss.
+            console.warn('[History Service] Could not minify model content, saving raw version.', e);
         }
+    }
 
-        return await prisma.message.create({
+    try {
+        return await db.message.create({
             data: {
                 sessionId: sessionId,
                 role: role,
-                content: finalContent, // Use processed content
+                content: finalContent, // Use the processed (potentially minified) content
                 userMessage: options?.userMessage,
                 projectData: options?.projectData ?? undefined,
             },
