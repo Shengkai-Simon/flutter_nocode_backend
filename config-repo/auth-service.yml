@@ -5,6 +5,11 @@ spring:
   application:
     name: ${APP_NAME:auth-service}
 
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: 6379
+
   datasource:
     url: ${POSTGRE_SQL:jdbc:postgresql://localhost:5432}/authdb
     username: user
@@ -14,3 +19,15 @@ spring:
     oauth2:
       authorizationserver:
         issuer: ${JWT_ISSUER_URI:http://localhost:9000}
+
+rsa:
+  key:
+    private-key: ${RSA_PRIVATE_KEY}
+    public-key: ${RSA_PUBLIC_KEY}
+
+app:
+  sso:
+    cookie-name: "authToken"
+    # For localhost development, domain should be omitted
+    # domain:
+    max-age-seconds: 3600 # 1 hour

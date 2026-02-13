@@ -1,42 +1,82 @@
 package dev.skyang.apigateway;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.skyang.apigateway.config.CookieAuthenticationConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;  // enable reactive security
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 import reactor.core.publisher.Mono;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableWebFluxSecurity
 public class ApiGatewaySecurityConfig {
 
+    @Autowired
+    private CookieAuthenticationConverter cookieAuthenticationConverter;
+
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
-                // use lambda DSL to disable CSRF (csrf() deprecated in 6.1)
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/actuator/**").permitAll()
+                        .pathMatchers(
+                                "/actuator/**",
+                                "/api/auth/public/**",
+                                "/api/users/public/**"
+                        ).permitAll()
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
-                                // use reactive adapter for JwtAuthenticationConverter
-                                .jwtAuthenticationConverter(jwtConverter())
-                        )
+                        .bearerTokenConverter(cookieAuthenticationConverter)
+                        .jwt(Customizer.withDefaults())
+                        .authenticationEntryPoint(customAuthenticationEntryPoint())
                 );
         return http.build();
     }
 
-    private Converter<Jwt, Mono<AbstractAuthenticationToken>> jwtConverter() {
-        JwtAuthenticationConverter delegate = new JwtAuthenticationConverter();
-        // wrap into reactive adapter
-        return new ReactiveJwtAuthenticationConverterAdapter(delegate);
+    /**
+     * Customize the entry point for authentication failures to generate a unified JSON response.
+     */
+    @Bean
+    public ServerAuthenticationEntryPoint customAuthenticationEntryPoint() {
+        return (exchange, ex) -> {
+            ServerHttpResponse response = exchange.getResponse();
+            response.setStatusCode(HttpStatus.UNAUTHORIZED);
+            response.getHeaders().set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+            byte[] responseBytes = getResponseBytes();
+
+            DataBuffer buffer = response.bufferFactory().wrap(responseBytes);
+            return response.writeWith(Mono.just(buffer));
+        };
+    }
+
+    private static byte[] getResponseBytes() {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("code", HttpStatus.UNAUTHORIZED.value());
+        errorResponse.put("message", "Authentication token is invalid or has expired.");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        byte[] responseBytes;
+        try {
+            responseBytes = objectMapper.writeValueAsBytes(errorResponse);
+        } catch (JsonProcessingException e) {
+            responseBytes = "{\"code\":500,\"message\":\"Error creating error response\"}".getBytes();
+        }
+        return responseBytes;
     }
 }

@@ -1,11 +1,50 @@
 server:
   port: ${SERVER_PORT:9100}
 
+app:
+  admin:
+    email: ${ADMIN_EMAIL:admin@example.com}
+    password: ${ADMIN_PASSWORD:adminpassword123}
+  sso:
+    cookie-name: "authToken"
+
 spring:
   application:
     name: ${APP_NAME:user-service}
 
+  # === PostgreSQL Database Configuration ===
   datasource:
     url: ${POSTGRE_SQL:jdbc:postgresql://localhost:5432}/userdb
     username: user
     password: pass
+
+  # === Redis Configuration for Caching Verification Codes ===
+  data:
+    redis:
+      host: ${REDIS_HOST:redis} # Use the service name from docker-compose
+      port: 6379
+
+  # === RabbitMQ Configuration for Asynchronous Notifications ===
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq} # Use the service name from docker-compose
+    port: 5672
+    username: user
+    password: pass
+
+  # === RabbitMQ Topic Exchange and Queue Declarations ===
+  # It's a good practice to declare them here or in a @Configuration class
+  # This ensures they exist before messages are sent.
+  amqp:
+    declarations:
+      - exchange:
+          name: notification.exchange
+          type: topic
+          durable: true
+      - queue:
+          name: email.queue
+          durable: true
+      - binding:
+          destination: email.queue
+          exchange: notification.exchange
+          routingKey: email.routing.key
+
