@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:9200}
+
+app:
+  sso:
+    cookie-name: "authToken"
+
+spring:
+  application:
+    name: ${APP_NAME:project-service}
+
+  # === PostgreSQL Database Configuration ===
+  datasource:
+    url: ${POSTGRE_SQL:jdbc:postgresql://localhost:5432}/projectdb
+    username: user
+    password: pass
+
+  jpa:
+    properties:
+      hibernate:
+        # This property is important for jsonb types to work properly
+        type:
+          preferred_json_mapper: jackson
+    hibernate:
+      ddl-auto: update
+

@@ -1,0 +1,58 @@
+import express, { Application, Request, Response } from 'express';
+import 'dotenv/config';
+
+import sessionRoutes from './api/session.routes';
+import projectRoutes from './api/project.routes';
+
+import errorHandler from './middleware/errorHandler.middleware';
+import verifyInternalApiKey  from './middleware/apiKey.middleware';
+
+import { ResponseHandler } from './utils/response.util';
+
+import eurekaClient from './config/eureka';
+
+const app: Application = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+
+// This public health check endpoint does not need the API key
+app.get('/health', (req: Request, res: Response) => {
+    ResponseHandler.success(res, { status: 'UP', timestamp: new Date() });
+});
+
+// 1. Define a router dedicated to handling internal service calls
+const internalRouter = express.Router();
+//    and apply API key validation middleware to this router
+internalRouter.use(verifyInternalApiKey);
+//    (In the future, any internal interfaces will be mounted on the internalRouter)
+//    e.g., internalRouter.use('/some-internal-feature', ...);
+
+// 2. Define the router that processes user requests from the gateway
+const apiRouter = express.Router();
+apiRouter.use([sessionRoutes, projectRoutes]); // Currently, all service interfaces serve users
+
+// 3. Mount the two routers on the main app and use different path prefixes
+app.use('/api', apiRouter); // User API, no key required
+app.use('/api/internal', internalRouter); // Internal API, which requires a key
+
+// Error handler
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+    console.log(`MCP Service is running on port ${PORT}`);
+    eurekaClient.start(error => {
+        if (error) {
+            console.error('Eureka registration failed:', error);
+        } else {
+            console.log('Eureka client registered successfully.');
+        }
+    });
+});
+
+process.on('SIGINT', () => {
+    eurekaClient.stop(() => {
+        console.log('Eureka client stopped.');
+        process.exit();
+    });
+});

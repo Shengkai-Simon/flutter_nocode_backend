@@ -11,8 +11,20 @@ management:
       exposure:
         include: health,info
 
-spring:
+logging:
+  level:
+    root: INFO
+    dev.skyang: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: TRACE
 
+app:
+  security:
+    internal-api-key:
+      primary: ${INTERNAL_API_KEY_PRIMARY}
+      secondary: ${INTERNAL_API_KEY_SECONDARY}
+
+spring:
   jpa:
     hibernate:
       ddl-auto: update
