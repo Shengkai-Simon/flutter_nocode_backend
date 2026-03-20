@@ -83,9 +83,27 @@ The backend infrastructure for a no-code Flutter UI builder. Built on a Spring C
 
 ### Prerequisites
 - Docker & Docker Compose
-- A `.env` file in the project root
 
-### 1. Start Infrastructure
+### 1. Create your `.env` file
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and fill in the values marked `your-*`. The variables that work out-of-the-box (docker service names, ports) are already set correctly — you only need to supply:
+
+| Variable | What to put |
+|---|---|
+| `MAIL_*` | Your SMTP credentials |
+| `GOOGLE_/APPLE_/MICROSOFT_*` | OAuth app credentials (optional) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Seed admin account |
+| `INTERNAL_API_KEY_PRIMARY/SECONDARY` | Run `openssl rand -base64 32` twice |
+| `RSA_PRIVATE_KEY` / `RSA_PUBLIC_KEY` | See comment in `.env.example` for generation commands |
+| `GEMINI_API_KEY` | Google AI Studio API key |
+
+> **Note:** `.env` is git-ignored. Never commit it. Commit `.env.example` instead.
+
+### 2. Start Infrastructure
 
 ```bash
 docker compose -f docker-compose.infra.yml up -d
@@ -93,7 +111,7 @@ docker compose -f docker-compose.infra.yml up -d
 
 Starts PostgreSQL, Redis, and RabbitMQ.
 
-### 2. Start All Services
+### 3. Start All Services
 
 ```bash
 docker compose -f docker-compose.services.yml up -d
