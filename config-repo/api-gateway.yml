@@ -17,6 +17,10 @@ spring:
 
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 5000       # Connection timeout (ms)
+        response-timeout: 60s       # Response timeout, which is 60 seconds
+
       discovery:
         locator:
           enabled: true
@@ -62,6 +66,19 @@ spring:
             - Path=/api/projects/**
           filters:
             - RewritePath=/api/projects/(?<path>.*), /api/projects/$\{path}
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@ipKeyResolver}"
+                redis-rate-limiter:
+                  replenishRate: 10
+                  burstCapacity: 20
+
+        - id: mcp-service-route
+          uri: lb://mcp-service
+          predicates:
+            - Path=/api/mcp/**
+          filters:
+            - RewritePath=/api/mcp/(?<path>.*), /api/$\{path}
             - name: RequestRateLimiter
               args:
                 key-resolver: "#{@ipKeyResolver}"
