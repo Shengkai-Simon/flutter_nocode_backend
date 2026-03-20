@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionType {
+  CREATE
+  ADJUST
+}
+
+model Session {
+  id        String    @id
+  title     String?
+  createdAt DateTime  @default(now())
+  projectId String
+  messages  Message[] // Relation to Message model
+  sessionType SessionType  @default(CREATE)
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  role      String
+  content   String   // For user/system, the original text is stored; For models, store the raw JSON string returned by AI
+  createdAt DateTime @default(now())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+
+  userMessage String? // Store text messages extracted from AI responses for presentation to users
+  projectData Json?   // Stores JSON objects extracted from AI responses that represent the state of the UI
+}

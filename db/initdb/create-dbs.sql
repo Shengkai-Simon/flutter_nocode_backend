@@ -5,3 +5,4 @@ CREATE DATABASE authdb;
 CREATE DATABASE userdb;
 CREATE DATABASE projectdb;
 CREATE DATABASE notificationdb;
+CREATE DATABASE mcpdb;
