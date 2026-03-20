@@ -8,7 +8,7 @@ import { addMessageAndGetValidatedResponse } from '../services/session.service';
  */
 export const handleAddMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const { sessionId } = req.params;
+        const sessionId = req.params.sessionId as string;
         const { content } = req.body;
 
         if (!content) {
@@ -29,7 +29,7 @@ export const handleAddMessage = async (req: Request, res: Response, next: NextFu
  * Handle requests to get detailed message history for a single session
  */
 export const handleGetSessionHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { sessionId } = req.params;
+    const sessionId = req.params.sessionId as string;
     try {
         const messages = await getHistoryForSession(sessionId);
         ResponseHandler.success(res, messages);
@@ -42,7 +42,7 @@ export const handleGetSessionHistory = async (req: Request, res: Response, next:
  * Handle requests to delete individual sessions
  */
 export const handleDeleteSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { sessionId } = req.params;
+    const sessionId = req.params.sessionId as string;
     try {
         await deleteSession(sessionId);
         res.status(204).send();

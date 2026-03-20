@@ -159,7 +159,7 @@ services:
 
   flutter-app:
     build:
-      context: ../flutter_editor
+      context: ../flutter_nocode_editor
       dockerfile: Dockerfile
     container_name: flutter-app
     ports:
