@@ -10,7 +10,7 @@ import { createNewSession, createSessionFromAdjustment } from '../services/proje
  */
 export const handleCreateSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId as string;
         const { content } = req.body;
 
         if (!content) {
@@ -38,7 +38,7 @@ export const handleCreateSession = async (req: Request, res: Response, next: Nex
  */
 export const handleAdjustSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const { projectId } = req.params;
+        const projectId = req.params.projectId as string;
         const { content, jsonLayout } = req.body;
 
         if (!content || !jsonLayout) {
@@ -66,7 +66,7 @@ export const handleAdjustSession = async (req: Request, res: Response, next: Nex
  * GET /projects/:projectId/sessions
  */
 export const handleListSessions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { projectId } = req.params;
+    const projectId = req.params.projectId as string;
     try {
         const sessions = await listSessionsByProjectId(projectId);
         ResponseHandler.success(res, sessions);
