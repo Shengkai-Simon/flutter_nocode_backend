@@ -147,6 +147,16 @@ services:
     networks:
       - backend
 
+  react-portal:
+    build:
+      context: ../flutter_nocode_frontend_shell
+      dockerfile: Dockerfile
+    container_name: react-portal
+    ports:
+      - "5173:80"
+    networks:
+      - backend
+
   nginx:
     image: nginx:stable-alpine
     container_name: nginx-proxy
@@ -154,6 +164,9 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - react-portal
+      - flutter-app
     networks:
       - backend
 
