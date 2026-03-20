@@ -13,7 +13,7 @@ const schemaJSON = JSON.parse(fs.readFileSync(path.join(__dirname, './../prompt_
 const exampleJSON:SchemaType.OBJECT = JSON.parse(fs.readFileSync(path.join(__dirname, './../prompt_resources/example_project_v1.json'), 'utf8'));
 
 // The overall JSON output structure example
-const outputFormat = {"data": exampleJSON, "userMessage": "A message presented to the user to let them know what you did"};
+export const outputFormat = {"data": exampleJSON, "userMessage": "A message presented to the user to let them know what you did"};
 
 // --- PROMPT ENGINEERING ENHANCEMENTS
 const BASE_RULES = `

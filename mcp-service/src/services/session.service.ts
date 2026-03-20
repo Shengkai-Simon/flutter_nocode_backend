@@ -1,6 +1,6 @@
 import { findSessionById, addMessageToHistory, getHistoryForSession } from './history.service';
 import { getAiRawResponse } from './gemini.service';
-import { AiResponse, AiResponseSchema } from '../config/ai.config';
+import { AiResponse, AiResponseSchema, outputFormat } from '../config/ai.config';
 import { withRetry } from '../utils/retry.util';
 import { z } from "zod";
 import { buildFinalPrompt } from './prompt.service';
@@ -72,13 +72,19 @@ export const addMessageAndGetValidatedResponse = async (sessionId: string, userC
                 : `JSON parsing failed: ${(error as Error).message}`;
 
             return `
-                ATTENTION: Your last response could not be processed.
-                --- RAW AI RESPONSE ---
-                ${failedResponse}
-                --- FAILURE REASON ---
-                ${failureReason}
+                ATTENTION: Your last response could not be processed due to a structural error.
                 ---
-                Please provide a new, corrected JSON object that strictly follows all rules.
+                FAILURE REASON: ${failureReason}
+                ---
+                YOUR INVALID RESPONSE:
+                ${failedResponse}
+                ---
+                REMINDER: You MUST follow the schema. Here is an example of a CORRECT and VALID JSON structure. Your output MUST match this format exactly:
+                \`\`\`json
+                ${JSON.stringify(outputFormat, null, 2)}
+                \`\`\`
+                ---
+                Please provide a new, corrected JSON object that strictly follows all rules and the format example.
             `;
         }
     });
