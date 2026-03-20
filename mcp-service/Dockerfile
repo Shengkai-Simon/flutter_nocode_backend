@@ -34,5 +34,5 @@ EXPOSE 3000
 ENTRYPOINT ["dockerize", \
   "-wait", "tcp://postgres:5432", \
   "-wait", "http://discovery-service:8761/actuator/health", \
-  "-timeout", "60s", \
+  "-timeout", "120s", \
   "sh", "-c", "npx prisma migrate deploy && node dist/app.js"]
