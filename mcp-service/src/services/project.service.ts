@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../config/prisma';
 import { getAiRawResponse, getAiTitle } from './gemini.service';
-import { AiResponseSchema } from '../config/ai.config';
+import { AiResponseSchema, outputFormat } from '../config/ai.config';
 import { Session, SessionType } from "@prisma/client";
 import { z } from "zod";
 import { withRetry } from '../utils/retry.util';
@@ -60,13 +60,19 @@ const createSessionInternal = async (
                 ? `Zod validation failed: ${error.errors.map(e => e.message).join(', ')}`
                 : `JSON parsing failed: ${(error as Error).message}`;
             return `
-                ATTENTION: Your last response could not be processed.
-                --- RAW AI RESPONSE ---
-                ${failedResponse}
-                --- FAILURE REASON ---
-                ${failureReason}
+                ATTENTION: Your last response could not be processed due to a structural error.
                 ---
-                Please provide a new, corrected JSON object that strictly follows all rules.
+                FAILURE REASON: ${failureReason}
+                ---
+                YOUR INVALID RESPONSE:
+                ${failedResponse}
+                ---
+                REMINDER: You MUST follow the schema. Here is an example of a CORRECT and VALID JSON structure. Your output MUST match this format exactly:
+                \`\`\`json
+                ${JSON.stringify(outputFormat, null, 2)}
+                \`\`\`
+                ---
+                Please provide a new, corrected JSON object that strictly follows all rules and the format example.
             `;
         }
     });
