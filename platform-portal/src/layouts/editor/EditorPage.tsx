@@ -1,71 +1,61 @@
-import {useSearchParams, useLocation, Link} from 'react-router-dom';
-import {navRoutes} from '@/lib/navRoutes';
-import React, {useEffect, useRef, useState} from 'react';
-import {useAiAssistantStore} from "@/stores/useAiAssistantStore.ts";
-import {AiAssistant} from "@/components/AiAssistant.tsx";
+import {useSearchParams, Link, useLocation} from 'react-router-dom';
+import { IframeChannelProvider, useIframeChannel } from '@/hooks/useIframeChannel.tsx';
+import { AiAssistant } from '@/components/assistant/AiAssistant.tsx';
+import { Button } from '@/components/ui/button.tsx';
+import { navRoutes } from '@/lib/navRoutes.ts';
 
-export default function EditorPage() {
-    // Get the projectId from the URL
-    const [searchParams] = useSearchParams();
+function EditorView() {
     const location = useLocation();
-    const iframeRef = useRef<HTMLIFrameElement>(null);
-    const { setSelectedComponent } = useAiAssistantStore();
-    const [isHandshakeComplete, setIsHandshakeComplete] = useState(false);
-
+    const { iframeRef, isHandshakeComplete } = useIframeChannel();
+    const [searchParams] = useSearchParams();
     const projectId = searchParams.get('id');
+    const flutterAppUrl = navRoutes.editor(projectId!);
 
-    useEffect(() => {
-        const handleMessageFromFlutter = (event: MessageEvent) => {
-            const { type, payload } = event.data;
-            console.log('React Received Message: ', event.data);
-            switch (type) {
-                case 'flutterReady':
-                    console.log('Handshake complete: Received flutterReady signal.');
-                    setIsHandshakeComplete(true);
-                    break;
-                case 'selectionChanged':
-                    console.log('Received selection from Flutter:', payload);
-                    setSelectedComponent(payload);
-                    break;
-                default:
-                    break;
-            }
-        };
-        window.addEventListener('message', handleMessageFromFlutter);
-        return () => window.removeEventListener('message', handleMessageFromFlutter);
-    }, [setSelectedComponent]);
+    // Move the listening logic of selectionChanged from zustand to here
+    // React.useEffect(() => {
+    //     const handleSelectionChange = (event: CustomEvent) => {
+    //         useAiAssistantStore.getState().setSelectedComponent(event.detail);
+    //     };
+    //     window.addEventListener('flutterSelectionChanged', handleSelectionChange as EventListener);
+    //     return () => window.removeEventListener('flutterSelectionChanged', handleSelectionChange as EventListener);
+    // }, []);
 
-    const initiateHandshake = () => {
-        if (iframeRef.current?.contentWindow) {
-            console.log('React is ready, initiating handshake...');
-            iframeRef.current.contentWindow.postMessage({ type: 'reactReady' }, '*');
-        }
-    };
-
-    if (!projectId) {
-        return (
-            <div>
-                <p>Error: Project ID is missing.</p>
-                <Link to={navRoutes.dashboard}>Return to the list of items</Link>
-            </div>
-        )
-    }
-
-    const iframeKey = location.key;
-    const flutterAppUrl = navRoutes.editor(projectId);
     return (
-        <div style={{width: '100%', height: '100vh', overflow: 'hidden'}}>
+        <>
             <iframe
-                key={iframeKey}
+                key={location.key} // Use location.key to ensure that the iframe is reloaded every time the route changes
                 ref={iframeRef}
                 src={flutterAppUrl}
                 style={{ width: '100%', height: '100%', border: 'none' }}
                 title="Flutter Editor"
-                onLoad={initiateHandshake} // iframe 加载后，由 React 主动发起握手
             />
             {isHandshakeComplete && (
-                <AiAssistant iframeRef={iframeRef as React.RefObject<HTMLIFrameElement>} />
+                <AiAssistant projectId={projectId!} />
             )}
+        </>
+    );
+}
+
+export default function EditorPage() {
+    const [searchParams] = useSearchParams();
+    const projectId = searchParams.get('id');
+
+    if (!projectId) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen gap-4">
+                <p className="text-lg text-destructive">Error: The project ID is missing.</p>
+                <Link to={navRoutes.dashboard}>
+                    <Button variant="outline">Return to the list of items</Button>
+                </Link>
+            </div>
+        )
+    }
+
+    return (
+        <div style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
+            <IframeChannelProvider>
+                <EditorView />
+            </IframeChannelProvider>
         </div>
     );
 }

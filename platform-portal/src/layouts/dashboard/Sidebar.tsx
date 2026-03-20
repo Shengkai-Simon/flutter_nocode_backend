@@ -29,8 +29,7 @@ interface Item {
 }
 
 const items: Item[] = [
-    {title: "Project", url: "#", icon: LayoutList, isActive: true},
-    {title: "Ask AI", url: "#", icon: Sparkles}
+    {title: "Project", url: "#", icon: LayoutList, isActive: true}
 ];
 
 export default function DashboardSidebar({className, ...props}: React.ComponentProps<"div">) {
